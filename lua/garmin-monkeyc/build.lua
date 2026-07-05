@@ -181,10 +181,23 @@ function M.build()
   compile(device)
 end
 
+-- Remove the build output directory (bin/), like VS Code's "Clean Project".
+function M.clean()
+  local bin = vim.fs.joinpath(project_directory(), "bin")
+
+  if not vim.uv.fs_stat(bin) then
+    return notify("nothing to clean (no bin/)")
+  end
+
+  vim.fn.delete(bin, "rf")
+  notify("removed " .. bin)
+end
+
 local subcommands = {
   ["build"] = M.build,
   ["build-for-device"] = M.build_for_device,
   ["run-for-device"] = M.run_for_device,
+  ["clean"] = M.clean,
 }
 
 -- Subcommands whose argument is a device id (used to scope completion).

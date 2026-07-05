@@ -17,7 +17,7 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] Run in simulator — `:MonkeyC run-for-device [device]`
 - [x] Build current project — `:MonkeyC build`
 - [ ] Run unit tests
-- [ ] Clean project
+- [x] Clean project — `:MonkeyC clean`
 - [ ] Export project (`.iq` for the Connect IQ Store)
 - [ ] New project
 - [ ] Generate a developer key
@@ -131,6 +131,7 @@ Then:
 | `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt)              |
 | `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                                  |
 | `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it                       |
+| `:MonkeyC clean`                     | remove the `bin/` build output directory                                  |
 
 `:MonkeyC build` uses the `device` option as the default device, falling back to
 the first product in `manifest.xml`.
