@@ -13,11 +13,11 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] Language server — hover, completion, goto-definition, references, rename,
       document/workspace symbols, folding, call/type hierarchy (see
       [LSP capabilities](#lsp-capabilities))
-- [x] Build for device — `:MonkeyC build-for-device [device]`
-- [x] Run in simulator — `:MonkeyC run-for-device [device]`
-- [x] Build current project — `:MonkeyC build`
+- [x] Build for device - `:MonkeyC build-for-device [device]`
+- [x] Run in simulator - `:MonkeyC run-for-device [device]`
+- [x] Build current project - `:MonkeyC build`
+- [x] Clean project - `:MonkeyC clean`
 - [ ] Run unit tests
-- [x] Clean project — `:MonkeyC clean`
 - [ ] Export project (`.iq` for the Connect IQ Store)
 - [ ] New project
 - [ ] Generate a developer key
@@ -59,11 +59,13 @@ With [lazy.nvim]:
   ft = "monkeyc",
   config = function()
     require("garmin-monkeyc").setup({
-      -- all optional
       capabilities = require("cmp_nvim_lsp").default_capabilities(),
       on_attach = my_on_attach,
       type_check_level = "Default", -- Default | Off | Gradual | Informative | Strict
       function_completion = "snippet", -- "snippet" (cursor inside ()) | "strip"
+      sdk_path = nil, -- path to SDK installation, use if not in OS default path
+      device = nil, -- device id for type-checking (leave blank unless needed)
+      developer_key = "~/.garmin/developer_key.der", -- your developer key
     })
   end,
 }
@@ -97,41 +99,41 @@ Also falls back to the builtin when no Monkey C client is attached.
 
 ## Configuration
 
-| option                | default            | meaning                                                                                                          |
-| --------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                     |
-| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                                  |
-| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                             |
-| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name`      |
-| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                          |
-| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                          |
-| `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds; required by `:MonkeyC build-for-device`/`run-for-device` |
+| option                | default            | meaning                                                                                                     |
+| --------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                |
+| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                             |
+| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                        |
+| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name` |
+| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                     |
+| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                     |
+| `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds                                                      |
 
 ---
 
 ## Building and running
 
-Requires a **developer key** (the same one the VS Code extension asks for). Point
-`developer_key` at it:
+Requires a **developer key** to pass to the compiler when building, set
+`developer_key`.
 
-```lua
-require("garmin-monkeyc").setup({
-  developer_key = "~/.garmin/developer_key.der", -- your key
-})
+No key yet? Generate one with:
+
+```sh
+openssl genrsa -out key.pem 4096 \
+  && openssl pkcs8 \
+    -topk8 -inform PEM -outform DER -nocrypt \
+    -in key.pem \
+    -out developer_key.der
 ```
-
-(No key yet? Generate one with:
-`openssl genrsa -out key.pem 4096 && openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in key.pem -out developer_key.der` —
-or use the SDK Manager / VS Code's "Generate a Developer Key".)
 
 Then:
 
-| command                              | action                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------- |
-| `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt)              |
-| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                                  |
-| `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it                       |
-| `:MonkeyC clean`                     | remove the `bin/` build output directory                                  |
+| command                              | action                                                       |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt) |
+| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                     |
+| `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it          |
+| `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 
 `:MonkeyC build` uses the `device` option as the default device, falling back to
 the first product in `manifest.xml`.
@@ -144,8 +146,7 @@ the command line. Build errors (including type-check errors) go to the quickfix
 list.
 
 The type-check level for builds follows the `type_check_level` option (`Strict`
-maps to the compiler's `-l 3`, so a `Strict` build fails on type errors — same as
-VS Code).
+maps to the compiler's `-l 3`, so a `Strict` build fails on type errors.
 
 ---
 
