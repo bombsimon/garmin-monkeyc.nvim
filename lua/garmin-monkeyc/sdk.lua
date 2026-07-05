@@ -19,13 +19,27 @@ function M.default_sdk_path()
   return vim.fs.joinpath(vim.env.HOME, ".Garmin", "ConnectIQ", "Sdks")
 end
 
--- Path to a tool in the newest installed SDK's bin directory (e.g. "monkeyc",
--- "monkeydo", "connectiq", "LanguageServer.jar"). The list form of glob returns
--- sorted matches, so the last one is the newest SDK.
-function M.tool(sdk_path, name)
-  local matches = vim.fn.glob(vim.fs.joinpath(sdk_path, "*", "bin", name), false, true)
+-- Newest installed SDK directory under sdk_path (the versioned
+-- connectiq-sdk-* folder). Folder names sort, so the last is the newest.
+function M.newest_sdk(sdk_path)
+  local bins = vim.fn.glob(vim.fs.joinpath(sdk_path, "*", "bin"), false, true)
+  local newest_bin = bins[#bins]
 
-  return matches[#matches]
+  return newest_bin and vim.fs.dirname(newest_bin) or nil
+end
+
+-- Path to a tool in the newest SDK's bin (e.g. "monkeyc", "monkeydo",
+-- "connectiq", "LanguageServer.jar"), or nil if it isn't there.
+function M.tool(sdk_path, name)
+  local sdk_dir = M.newest_sdk(sdk_path)
+
+  if not sdk_dir then
+    return nil
+  end
+
+  local path = vim.fs.joinpath(sdk_dir, "bin", name)
+
+  return vim.uv.fs_stat(path) and path or nil
 end
 
 function M.language_server_jar(sdk_path)

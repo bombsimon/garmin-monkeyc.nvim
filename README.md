@@ -21,7 +21,7 @@ Tracking parity with the [official VS Code extension][vscode].
 - [ ] Export project (`.iq` for the Connect IQ Store)
 - [ ] New project
 - [ ] Generate a developer key
-- [ ] Verify installation
+- [x] Verify installation - `:checkhealth garmin-monkeyc`
 - [ ] Edit manifest (products, permissions, languages, application, annotations)
 - [ ] Regenerate UUID
 - [ ] Debugger (DAP)
@@ -137,6 +137,13 @@ Then:
 
 `:MonkeyC build` uses the `device` option as the default device, falling back to
 the first product in `manifest.xml`.
+
+### Health check
+
+Run `:checkhealth garmin-monkeyc` to verify the setup — it reports the detected
+SDK, `LanguageServer.jar`, the `monkeyc`/`monkeydo`/`connectiq` tools, `java`, the
+installed device count, the developer key, and whether the language server is
+attached.
 
 If `[device]` is omitted you get a picker of the devices declared in
 `manifest.xml`, showing friendly names (e.g. `fēnix® 7 / quatix® 7`). The picker
