@@ -6,26 +6,13 @@ support for the language server shipped as `LanguageServer.jar` inside the
 
 For more details around LSP documentation, see [LSP_DOCS.md][lsp-docs].
 
-## Features
-
-- Auto-discovers the newest installed SDK's (and its `LanguageServer.jar`).
-- Works around the server's `initialize` NPE (missing-capability crash).
-- Builds the per-project `workspaceSettings` the server needs before it will
-  resolve anything (project path, jungle files, type check level, target
-  device).
-- Cleans the server's VS Code-flavored HTML hover into plain Markdown.
-- Rewrites the server's `name()` function completions into `name($0)` snippets
-  so confirming drops the cursor between the parens (mirrors VS Code plugin
-  handling of LSP result).
-- Build and run projects from the SDK toolchain (`:MonkeyC`).
-
 ## Feature parity
 
-Tracking parity with the [official VS Code extension][vscode]. Ticked = supported
-here; the rest is the roadmap.
+Tracking parity with the [official VS Code extension][vscode].
 
-- [x] Language server (hover, completion, goto-definition, references, rename,
-      document/workspace symbols, folding, call/type hierarchy)
+- [x] Language server — hover, completion, goto-definition, references, rename,
+      document/workspace symbols, folding, call/type hierarchy (see
+      [LSP capabilities](#lsp-capabilities))
 - [x] Build for device — `:MonkeyC build-for-device [device]`
 - [x] Run in simulator — `:MonkeyC run-for-device [device]`
 - [ ] Build current project (default / all products)
@@ -110,14 +97,14 @@ Also falls back to the builtin when no Monkey C client is attached.
 
 ## Configuration
 
-| option                | default            | meaning                                                                                                     |
-| --------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                |
-| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                             |
-| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                        |
-| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name` |
-| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                     |
-| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                     |
+| option                | default            | meaning                                                                                                          |
+| --------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                     |
+| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                                  |
+| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                             |
+| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name`      |
+| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                          |
+| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                          |
 | `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds; required by `:MonkeyC build-for-device`/`run-for-device` |
 
 ---
@@ -139,10 +126,10 @@ or use the SDK Manager / VS Code's "Generate a Developer Key".)
 
 Then:
 
-| command | action |
-| --- | --- |
-| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device` |
-| `:MonkeyC run-for-device [device]` | build, launch the simulator, and push the app to it |
+| command                              | action                                              |
+| ------------------------------------ | --------------------------------------------------- |
+| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`            |
+| `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it |
 
 If `[device]` is omitted you get a picker of the devices declared in
 `manifest.xml`, showing friendly names (e.g. `fēnix® 7 / quatix® 7`). The picker
@@ -159,8 +146,20 @@ VS Code).
 
 ## LSP capabilities
 
-What the server implements (from its `initialize` capabilities and the jar's
-service methods), and how it behaves in Neovim:
+The bundled `LanguageServer.jar` doesn't work with a stock LSP client. To get it
+usable, the plugin:
+
+- Auto-discovers the newest installed SDK's `LanguageServer.jar`.
+- Works around the server's `initialize` NPE (it calls `.booleanValue()` on
+  client capabilities it never null-checks).
+- Builds the per-project `workspaceSettings` the server needs before it resolves
+  anything (project path, jungle files, type check level, device).
+- Cleans the server's VS Code-flavored HTML hover into plain Markdown.
+- Rewrites `name()` function completions into `name($0)` snippets so confirming
+  drops the cursor between the parens (matching the VS Code extension).
+
+With that in place, this is what the server implements (from its `initialize`
+capabilities and the jar's service methods) and how it behaves in Neovim:
 
 | Feature                                                                     | Status    | Notes                                                                                                             |
 | --------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
