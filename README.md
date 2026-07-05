@@ -17,6 +17,32 @@ For more details around LSP documentation, see [LSP_DOCS.md][lsp-docs].
 - Rewrites the server's `name()` function completions into `name($0)` snippets
   so confirming drops the cursor between the parens (mirrors VS Code plugin
   handling of LSP result).
+- Build and run projects from the SDK toolchain (`:MonkeyC`).
+
+## Feature parity
+
+Tracking parity with the [official VS Code extension][vscode]. Ticked = supported
+here; the rest is the roadmap.
+
+- [x] Language server (hover, completion, goto-definition, references, rename,
+      document/workspace symbols, folding, call/type hierarchy)
+- [x] Build for device — `:MonkeyC build-for-device [device]`
+- [x] Run in simulator — `:MonkeyC run-for-device [device]`
+- [ ] Build current project (default / all products)
+- [ ] Run unit tests
+- [ ] Clean project
+- [ ] Export project (`.iq` for the Connect IQ Store)
+- [ ] New project
+- [ ] Generate a developer key
+- [ ] Verify installation
+- [ ] Edit manifest (products, permissions, languages, application, annotations)
+- [ ] Regenerate UUID
+- [ ] Debugger (DAP)
+- [ ] Open SDK Manager
+- [ ] View documentation / open samples
+- [ ] External tools (Monkey Graph, Monkey Motion, ERA Viewer)
+- [ ] Configure barrel
+- [ ] Native pairing / complication launch
 
 ## Requirements
 
@@ -92,6 +118,42 @@ Also falls back to the builtin when no Monkey C client is attached.
 | `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name` |
 | `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                     |
 | `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                     |
+| `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds; required by `:MonkeyC build-for-device`/`run-for-device` |
+
+---
+
+## Building and running
+
+Requires a **developer key** (the same one the VS Code extension asks for). Point
+`developer_key` at it:
+
+```lua
+require("garmin-monkeyc").setup({
+  developer_key = "~/.garmin/developer_key.der", -- your key
+})
+```
+
+(No key yet? Generate one with:
+`openssl genrsa -out key.pem 4096 && openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in key.pem -out developer_key.der` —
+or use the SDK Manager / VS Code's "Generate a Developer Key".)
+
+Then:
+
+| command | action |
+| --- | --- |
+| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device` |
+| `:MonkeyC run-for-device [device]` | build, launch the simulator, and push the app to it |
+
+If `[device]` is omitted you get a picker of the devices declared in
+`manifest.xml`, showing friendly names (e.g. `fēnix® 7 / quatix® 7`). The picker
+uses `vim.ui.select`, so with [telescope-ui-select] (or `dressing.nvim`) it
+becomes a fuzzy Telescope picker automatically. Device ids also tab-complete on
+the command line. Build errors (including type-check errors) go to the quickfix
+list.
+
+The type-check level for builds follows the `type_check_level` option (`Strict`
+maps to the compiler's `-l 3`, so a `Strict` build fails on type errors — same as
+VS Code).
 
 ---
 
@@ -121,4 +183,5 @@ attached, your normal LSP keymaps just work.
 [ciq]: https://developer.garmin.com/connect-iq/overview/
 [lazy.nvim]: https://github.com/folke/lazy.nvim
 [lsp-docs]: ./LSP_DOCS.md
+[telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim
 [vscode]: https://marketplace.visualstudio.com/items?itemName=garmin.monkey-c

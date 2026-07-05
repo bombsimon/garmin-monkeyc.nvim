@@ -15,15 +15,29 @@ local M = {}
 M.type_check_levels = require("garmin-monkeyc.lsp").type_check_levels
 
 function M.setup(opts)
-	require("garmin-monkeyc.lsp").setup(opts)
+  -- Resolve options once; feature modules read them from config.
+  local options = require("garmin-monkeyc.config").setup(opts)
+
+  require("garmin-monkeyc.lsp").setup(options)
+  require("garmin-monkeyc.build").setup()
 end
 
 function M.hover()
-	return require("garmin-monkeyc.hover").hover()
+  return require("garmin-monkeyc.hover").hover()
 end
 
 function M.signature_help()
-	return require("garmin-monkeyc.signature").signature_help()
+  return require("garmin-monkeyc.signature").signature_help()
+end
+
+-- Exposed for keymaps; the :MonkeyC command is the usual entry point. A nil
+-- device prompts for one (from the manifest).
+function M.build_for_device(device)
+  return require("garmin-monkeyc.build").build_for_device(device)
+end
+
+function M.run_for_device(device)
+  return require("garmin-monkeyc.build").run_for_device(device)
 end
 
 return M

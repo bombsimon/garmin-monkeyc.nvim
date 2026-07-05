@@ -5,5 +5,5 @@
 -- client-chosen (the server reports no serverInfo). "monkeyc" (one word)
 -- matches the Neovim filetype and the VS Code extension's client id.
 return {
-	server_name = "monkeyc-lsp",
+  server_name = "monkeyc-lsp",
 }

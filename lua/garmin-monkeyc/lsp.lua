@@ -14,38 +14,38 @@ local server_name = require("garmin-monkeyc.constants").server_name
 -- NullPointerException on any Neovim leaves unset. Forcing each present (false =
 -- static registration, which Neovim handles) avoids it.
 local dynamic_registration_capabilities = {
-	textDocument = {
-		"synchronization",
-		"foldingRange",
-		"hover",
-		"declaration",
-		"definition",
-		"implementation",
-		"typeDefinition",
-		"references",
-		"typeHierarchy",
-		"documentHighlight",
-		"documentSymbol",
-		"completion",
-		"signatureHelp",
-		"rename",
-		"callHierarchy",
-	},
-	workspace = { "symbol" },
+  textDocument = {
+    "synchronization",
+    "foldingRange",
+    "hover",
+    "declaration",
+    "definition",
+    "implementation",
+    "typeDefinition",
+    "references",
+    "typeHierarchy",
+    "documentHighlight",
+    "documentSymbol",
+    "completion",
+    "signatureHelp",
+    "rename",
+    "callHierarchy",
+  },
+  workspace = { "symbol" },
 }
 
 local function with_dynamic_registration(capabilities)
-	local overrides = {}
+  local overrides = {}
 
-	for scope, names in pairs(dynamic_registration_capabilities) do
-		overrides[scope] = {}
+  for scope, names in pairs(dynamic_registration_capabilities) do
+    overrides[scope] = {}
 
-		for _, name in ipairs(names) do
-			overrides[scope][name] = { dynamicRegistration = false }
-		end
-	end
+    for _, name in ipairs(names) do
+      overrides[scope][name] = { dynamicRegistration = false }
+    end
+  end
 
-	return vim.tbl_deep_extend("force", capabilities or {}, overrides)
+  return vim.tbl_deep_extend("force", capabilities or {}, overrides)
 end
 
 -- Valid type check levels the server accepts. An empty or unknown value makes
@@ -62,19 +62,19 @@ M.type_check_levels = { "Default", "Off", "Gradual", "Informative", "Strict" }
 -- it gets a project path, jungle files, a valid type check level and a target
 -- device. These are per-project, so build them from the resolved root.
 local function build_workspace_settings(root, type_check_level, device)
-	local directory = sdk.project_directory(root)
+  local directory = sdk.project_directory(root)
 
-	return {
-		{
-			path = directory,
-			jungleFiles = sdk.jungle_files(directory),
-			-- options is positional: { typeCheckLevel, debugLogLevel, targetDevice }.
-			-- Like the VS Code extension, send no device by default (vim.NIL = JSON
-			-- null) — the server still resolves against a default. Set opts.device to
-			-- pin a specific device (e.g. for device-accurate Strict diagnostics).
-			options = { type_check_level, "Default", device or vim.NIL },
-		},
-	}
+  return {
+    {
+      path = directory,
+      jungleFiles = sdk.jungle_files(directory),
+      -- options is positional: { typeCheckLevel, debugLogLevel, targetDevice }.
+      -- Like the VS Code extension, send no device by default (vim.NIL = JSON
+      -- null) — the server still resolves against a default. Set opts.device to
+      -- pin a specific device (e.g. for device-accurate Strict diagnostics).
+      options = { type_check_level, "Default", device or vim.NIL },
+    },
+  }
 end
 
 -- Quirk: function completions come back as `name()` plus a client-side
@@ -92,42 +92,42 @@ end
 local snippet_insert_text_format = 2 -- lsp.InsertTextFormat.Snippet
 
 local function transform_function_calls(result, mode)
-	local items = result and (result.items or result)
+  local items = result and (result.items or result)
 
-	if type(items) ~= "table" then
-		return
-	end
+  if type(items) ~= "table" then
+    return
+  end
 
-	for _, item in ipairs(items) do
-		item.command = nil
+  for _, item in ipairs(items) do
+    item.command = nil
 
-		local rewrote = false
+    local rewrote = false
 
-		local function convert(text)
-			if type(text) ~= "string" or text:sub(-2) ~= "()" then
-				return text
-			end
+    local function convert(text)
+      if type(text) ~= "string" or text:sub(-2) ~= "()" then
+        return text
+      end
 
-			rewrote = true
+      rewrote = true
 
-			if mode == "strip" then
-				return text:sub(1, -3)
-			end
+      if mode == "strip" then
+        return text:sub(1, -3)
+      end
 
-			return text:sub(1, -3) .. "($0)"
-		end
+      return text:sub(1, -3) .. "($0)"
+    end
 
-		item.textEditText = convert(item.textEditText)
-		item.insertText = convert(item.insertText)
+    item.textEditText = convert(item.textEditText)
+    item.insertText = convert(item.insertText)
 
-		if item.textEdit and type(item.textEdit.newText) == "string" then
-			item.textEdit.newText = convert(item.textEdit.newText)
-		end
+    if item.textEdit and type(item.textEdit.newText) == "string" then
+      item.textEdit.newText = convert(item.textEdit.newText)
+    end
 
-		if rewrote and mode ~= "strip" then
-			item.insertTextFormat = snippet_insert_text_format
-		end
-	end
+    if rewrote and mode ~= "strip" then
+      item.insertTextFormat = snippet_insert_text_format
+    end
+  end
 end
 
 -- There is no official response-middleware hook, and vim.lsp.buf/handlers are
@@ -135,27 +135,27 @@ end
 -- completion response by wrapping the client's request method directly. Guarded
 -- so it wraps once per client even though on_attach fires per buffer.
 local function install_completion_transform(client, mode)
-	if client._garmin_completion_wrapped then
-		return
-	end
+  if client._garmin_completion_wrapped then
+    return
+  end
 
-	client._garmin_completion_wrapped = true
+  client._garmin_completion_wrapped = true
 
-	local request = client.request
-	client.request = function(self, method, params, handler, bufnr)
-		if method == "textDocument/completion" and type(handler) == "function" then
-			local inner = handler
-			handler = function(err, result, ctx, config)
-				if not err then
-					transform_function_calls(result, mode)
-				end
+  local request = client.request
+  client.request = function(self, method, params, handler, bufnr)
+    if method == "textDocument/completion" and type(handler) == "function" then
+      local inner = handler
+      handler = function(err, result, ctx, config)
+        if not err then
+          transform_function_calls(result, mode)
+        end
 
-				return inner(err, result, ctx, config)
-			end
-		end
+        return inner(err, result, ctx, config)
+      end
+    end
 
-		return request(self, method, params, handler, bufnr)
-	end
+    return request(self, method, params, handler, bufnr)
+  end
 end
 
 -- opts:
@@ -169,64 +169,64 @@ end
 --   device               - target device id to type-check against; defaults to
 --                          none (like VS Code before its first build)
 function M.setup(opts)
-	opts = opts or {}
+  opts = opts or {}
 
-	local type_check_level = opts.type_check_level or "Default"
-	local function_completion = opts.function_completion or "snippet"
-	local sdk_path = opts.sdk_path or sdk.default_sdk_path()
-	local device = opts.device
+  local type_check_level = opts.type_check_level or "Default"
+  local function_completion = opts.function_completion or "snippet"
+  local sdk_path = opts.sdk_path or sdk.default_sdk_path()
+  local device = opts.device
 
-	if not vim.tbl_contains(M.type_check_levels, type_check_level) then
-		vim.notify(
-			('garmin-monkeyc: invalid type_check_level %q, falling back to "Default"'):format(type_check_level),
-			vim.log.levels.WARN
-		)
+  if not vim.tbl_contains(M.type_check_levels, type_check_level) then
+    vim.notify(
+      ('garmin-monkeyc: invalid type_check_level %q, falling back to "Default"'):format(type_check_level),
+      vim.log.levels.WARN
+    )
 
-		type_check_level = "Default"
-	end
+    type_check_level = "Default"
+  end
 
-	local jar = sdk.language_server_jar(sdk_path)
+  local jar = sdk.language_server_jar(sdk_path)
 
-	if not jar then
-		vim.notify(("garmin-monkeyc: no LanguageServer.jar found under %s"):format(sdk_path), vim.log.levels.WARN)
+  if not jar then
+    vim.notify(("garmin-monkeyc: no LanguageServer.jar found under %s"):format(sdk_path), vim.log.levels.WARN)
 
-		return
-	end
+    return
+  end
 
-	vim.lsp.config(server_name, {
-		-- -Dapple.awt.UIElement=true marks the JVM as a background agent on macOS
-		-- so it never shows a Dock icon or menu bar (matches how the VS Code
-		-- extension launches it).
-		cmd = { "java", "-Dapple.awt.UIElement=true", "-jar", jar },
-		filetypes = { "monkeyc" },
-		root_markers = { "manifest.xml", ".git" },
-		capabilities = with_dynamic_registration(opts.capabilities),
-		on_attach = function(client, bufnr)
-			install_completion_transform(client, function_completion)
+  vim.lsp.config(server_name, {
+    -- -Dapple.awt.UIElement=true marks the JVM as a background agent on macOS
+    -- so it never shows a Dock icon or menu bar (matches how the VS Code
+    -- extension launches it).
+    cmd = { "java", "-Dapple.awt.UIElement=true", "-jar", jar },
+    filetypes = { "monkeyc" },
+    root_markers = { "manifest.xml", ".git" },
+    capabilities = with_dynamic_registration(opts.capabilities),
+    on_attach = function(client, bufnr)
+      install_completion_transform(client, function_completion)
 
-			-- Quirk: the server advertises rename prepareProvider, but its
-			-- prepareRename NPEs (-32603) at every position, while plain
-			-- textDocument/rename works. Drop prepareProvider so vim.lsp.buf.rename()
-			-- skips the broken prepare step and renames directly.
-			if type(client.server_capabilities.renameProvider) == "table" then
-				client.server_capabilities.renameProvider.prepareProvider = nil
-			end
+      -- Quirk: the server advertises rename prepareProvider, but its
+      -- prepareRename NPEs (-32603) at every position, while plain
+      -- textDocument/rename works. Drop prepareProvider so vim.lsp.buf.rename()
+      -- skips the broken prepare step and renames directly.
+      if type(client.server_capabilities.renameProvider) == "table" then
+        client.server_capabilities.renameProvider.prepareProvider = nil
+      end
 
-			if opts.on_attach then
-				opts.on_attach(client, bufnr)
-			end
-		end,
-		before_init = function(params, config)
-			params.initializationOptions = {
-				publishWarnings = true,
-				typeCheckMsgDisplayed = true,
-				compilerOptions = "",
-				workspaceSettings = build_workspace_settings(config.root_dir, type_check_level, device),
-			}
-		end,
-	})
+      if opts.on_attach then
+        opts.on_attach(client, bufnr)
+      end
+    end,
+    before_init = function(params, config)
+      params.initializationOptions = {
+        publishWarnings = true,
+        typeCheckMsgDisplayed = true,
+        compilerOptions = "",
+        workspaceSettings = build_workspace_settings(config.root_dir, type_check_level, device),
+      }
+    end,
+  })
 
-	vim.lsp.enable(server_name)
+  vim.lsp.enable(server_name)
 end
 
 return M
