@@ -169,9 +169,28 @@ function M.run_for_device(device)
   M.pick_device(build_and_run)
 end
 
+-- Build the current project without prompting, using a default device: the
+-- `device` option if set, else the first product in the manifest.
+function M.build()
+  local device = config.options.device or sdk.manifest_devices(project_directory())[1]
+
+  if not device then
+    return notify("no default device; set the `device` option or add products to manifest.xml", vim.log.levels.ERROR)
+  end
+
+  compile(device)
+end
+
 local subcommands = {
+  ["build"] = M.build,
   ["build-for-device"] = M.build_for_device,
   ["run-for-device"] = M.run_for_device,
+}
+
+-- Subcommands whose argument is a device id (used to scope completion).
+local device_subcommands = {
+  ["build-for-device"] = true,
+  ["run-for-device"] = true,
 }
 
 function M.setup()
@@ -179,7 +198,10 @@ function M.setup()
     local handler = subcommands[cmd.fargs[1]]
 
     if not handler then
-      return notify("unknown command; try build-for-device / run-for-device", vim.log.levels.ERROR)
+      return notify(
+        "unknown command; try " .. table.concat(vim.fn.sort(vim.tbl_keys(subcommands)), ", "),
+        vim.log.levels.ERROR
+      )
     end
 
     handler(cmd.fargs[2])
@@ -187,17 +209,23 @@ function M.setup()
     nargs = "*",
     desc = "Build/run Monkey C projects",
     complete = function(arglead, cmdline)
+      local subcommand = cmdline:match("MonkeyC%s+(%S+)%s")
+
       -- Completing the subcommand.
-      if not cmdline:match("MonkeyC%s+%S+%s") then
+      if not subcommand then
         return vim.tbl_filter(function(name)
           return name:find(arglead, 1, true) == 1
-        end, vim.tbl_keys(subcommands))
+        end, vim.fn.sort(vim.tbl_keys(subcommands)))
       end
 
-      -- Completing the device argument.
-      return vim.tbl_filter(function(id)
-        return id:find(arglead, 1, true) == 1
-      end, sdk.manifest_devices(project_directory()))
+      -- Completing a device argument, only for subcommands that take one.
+      if device_subcommands[subcommand] then
+        return vim.tbl_filter(function(id)
+          return id:find(arglead, 1, true) == 1
+        end, sdk.manifest_devices(project_directory()))
+      end
+
+      return {}
     end,
   })
 end

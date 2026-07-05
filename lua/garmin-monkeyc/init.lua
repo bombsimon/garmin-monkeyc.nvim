@@ -32,6 +32,10 @@ end
 
 -- Exposed for keymaps; the :MonkeyC command is the usual entry point. A nil
 -- device prompts for one (from the manifest).
+function M.build()
+  return require("garmin-monkeyc.build").build()
+end
+
 function M.build_for_device(device)
   return require("garmin-monkeyc.build").build_for_device(device)
 end

@@ -15,7 +15,7 @@ Tracking parity with the [official VS Code extension][vscode].
       [LSP capabilities](#lsp-capabilities))
 - [x] Build for device — `:MonkeyC build-for-device [device]`
 - [x] Run in simulator — `:MonkeyC run-for-device [device]`
-- [ ] Build current project (default / all products)
+- [x] Build current project — `:MonkeyC build`
 - [ ] Run unit tests
 - [ ] Clean project
 - [ ] Export project (`.iq` for the Connect IQ Store)
@@ -126,10 +126,14 @@ or use the SDK Manager / VS Code's "Generate a Developer Key".)
 
 Then:
 
-| command                              | action                                              |
-| ------------------------------------ | --------------------------------------------------- |
-| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`            |
-| `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it |
+| command                              | action                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------- |
+| `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt)              |
+| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                                  |
+| `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it                       |
+
+`:MonkeyC build` uses the `device` option as the default device, falling back to
+the first product in `manifest.xml`.
 
 If `[device]` is omitted you get a picker of the devices declared in
 `manifest.xml`, showing friendly names (e.g. `fēnix® 7 / quatix® 7`). The picker
