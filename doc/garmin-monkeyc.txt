@@ -122,6 +122,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                                  *MonkeyC-run*
                                                                 *MonkeyC-test*
                                                                *MonkeyC-debug*
+                                                *MonkeyC-debug-native-pairing*
                                                               *MonkeyC-export*
                                                         *MonkeyC-generate-key*
                                                          *MonkeyC-new-project*
@@ -159,6 +160,11 @@ Subcommands:                                                   *MonkeyC-build*
                           supports debugging (>= 2.3.0). Breakpoints, stepping,
                           the call stack, variables, and evaluation are handled
                           by nvim-dap. See |garmin-monkeyc-dap|.
+
+    debug-native-pairing [{device}]
+                          Same as debug, but runs in sensor (ANT/BLE) native
+                          pairing mode, for apps and data fields that pair with
+                          wireless sensors through a SensorDelegate.
 
     export [{path}]       Package a distributable `.iq` for the Connect IQ
                           Store (all products, release build). {path} may be a
@@ -242,7 +248,8 @@ require("garmin-monkeyc").build([{device}])        *garmin-monkeyc.build()*
 require("garmin-monkeyc").build_for_device([{device}])
 require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
 require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
-require("garmin-monkeyc").debug([{device}])        *garmin-monkeyc.debug()*
+require("garmin-monkeyc").debug([{device}], [{opts}]) *garmin-monkeyc.debug()*
+        opts.native_pairing runs in sensor (ANT/BLE) native pairing mode.
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").new_project([{dir}])     *garmin-monkeyc.new_project()*

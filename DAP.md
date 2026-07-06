@@ -113,9 +113,17 @@ java -classpath "<sdk>/bin/monkeybrains.jar:<sdk>/bin/LanguageServer.jar" \
 Sending a DAP `initialize` to that process returns a valid response:
 
 ```json
-{"type":"response","command":"initialize","success":true,
- "body":{"supportsConfigurationDoneRequest":true,"supportsEvaluateForHovers":true,
-         "supportsRestartRequest":false,"supportsTerminateRequest":true}}
+{
+  "type": "response",
+  "command": "initialize",
+  "success": true,
+  "body": {
+    "supportsConfigurationDoneRequest": true,
+    "supportsEvaluateForHovers": true,
+    "supportsRestartRequest": false,
+    "supportsTerminateRequest": true
+  }
+}
 ```
 
 (On Windows the classpath separator is `;` instead of `:`.)
@@ -134,6 +142,7 @@ class's string constants):
 | `prg`                   | path to the built `.prg`                                 |
 | `prgDebugXml`           | path to the matching `.prg.debug.xml`                    |
 | `stopAtLaunch`          | break immediately on start                               |
+| `runNativePairing`      | run in sensor (ANT/BLE) native pairing mode              |
 | `runTests`              | run unit tests instead of the app                        |
 | `tests`                 | optional array of test names                             |
 | `settingsJson`          | app settings                                             |

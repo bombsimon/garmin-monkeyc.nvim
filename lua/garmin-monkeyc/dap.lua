@@ -195,8 +195,12 @@ end
 
 -- Build a debuggable prg for the device, start the simulator, wait for its
 -- debug port, then start a DAP session. device is optional; when omitted the
--- manifest device picker is used.
-function M.debug(device)
+-- manifest device picker is used. opts.native_pairing runs the app in sensor
+-- (ANT/BLE) native pairing mode (matching the VS Code "Run Native Pairing"
+-- launch), for testing SensorDelegate pairing code.
+function M.debug(device, opts)
+  opts = opts or {}
+
   local dap = get_dap()
 
   if not dap then
@@ -208,6 +212,7 @@ function M.debug(device)
   end
 
   local build = require("garmin-monkeyc.build")
+  local native_pairing = opts.native_pairing == true
 
   local function launch(chosen)
     -- A debuggable (non-release) build emits <prg>.debug.xml next to the prg.
@@ -233,11 +238,12 @@ function M.debug(device)
         dap.run({
           type = "monkeyc",
           request = "launch",
-          name = "Monkey C: " .. chosen,
+          name = (native_pairing and "Monkey C native pairing: " or "Monkey C: ") .. chosen,
           device = chosen,
           prg = prg,
           prgDebugXml = prg .. ".debug.xml",
           stopAtLaunch = false,
+          runNativePairing = native_pairing,
         })
       end)
     end)

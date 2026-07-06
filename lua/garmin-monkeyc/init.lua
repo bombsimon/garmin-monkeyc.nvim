@@ -53,8 +53,8 @@ function M.test(device)
   return require("garmin-monkeyc.build").test(device)
 end
 
-function M.debug(device)
-  return require("garmin-monkeyc.dap").debug(device)
+function M.debug(device, opts)
+  return require("garmin-monkeyc.dap").debug(device, opts)
 end
 
 function M.export(output)

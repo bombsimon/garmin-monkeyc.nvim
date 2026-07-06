@@ -607,6 +607,9 @@ local subcommands = {
   ["debug"] = function(device)
     require("garmin-monkeyc.dap").debug(device)
   end,
+  ["debug-native-pairing"] = function(device)
+    require("garmin-monkeyc.dap").debug(device, { native_pairing = true })
+  end,
   ["export"] = M.export,
   ["generate-key"] = M.generate_key,
   ["new-project"] = M.new_project,
@@ -633,6 +636,7 @@ local device_subcommands = {
   ["run"] = true,
   ["test"] = true,
   ["debug"] = true,
+  ["debug-native-pairing"] = true,
 }
 
 -- Subcommands whose argument is a filesystem path.

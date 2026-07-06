@@ -26,8 +26,9 @@ Tracking the [VS Code extension][vscode].
 - [x] Open SDK Manager - `:MonkeyC sdk-manager`
 - [x] View docs / open samples - `:MonkeyC docs` / `:MonkeyC samples`
 - [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
+- [x] Native pairing - `:MonkeyC debug-native-pairing [device]`
 - [ ] Configure barrel
-- [ ] Native pairing / complication launch
+- [ ] Complication launch (publisher + subscriber)
 
 ## Requirements
 
@@ -73,44 +74,45 @@ Neovim detects `.mc` as `m4`.
 
 ## Configuration
 
-| option                | default     | meaning                                                                                  |
-| --------------------- | ----------- | ---------------------------------------------------------------------------------------- |
-| `capabilities`        | `nil`       | base LSP client capabilities, merged with the plugin's overrides                         |
-| `on_attach`           | `nil`       | called when the server attaches to a buffer                                              |
-| `type_check_level`    | `"Default"` | `Default`, `Off`, `Gradual`, `Informative`, `Strict`                                     |
-| `optimization_level`  | `"Default"` | compiler `-O` level: `Default`, `None`, `Basic`, `Fast`, `Slow` (`Default` omits `-O`)   |
+| option                | default     | meaning                                                                                     |
+| --------------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| `capabilities`        | `nil`       | base LSP client capabilities, merged with the plugin's overrides                            |
+| `on_attach`           | `nil`       | called when the server attaches to a buffer                                                 |
+| `type_check_level`    | `"Default"` | `Default`, `Off`, `Gradual`, `Informative`, `Strict`                                        |
+| `optimization_level`  | `"Default"` | compiler `-O` level: `Default`, `None`, `Basic`, `Fast`, `Slow` (`Default` omits `-O`)      |
 | `function_completion` | `"snippet"` | `"snippet"` puts the cursor inside `name()` (needs a snippet engine), `"strip"` uses `name` |
-| `sdk_path`            | per-OS      | the `Sdks` directory (see [Requirements](#requirements))                                  |
-| `device`              | `nil`       | device id for type-checking, leave unset unless you need it                              |
-| `developer_key`       | `nil`       | path to the `.der` key used to sign builds                                               |
+| `sdk_path`            | per-OS      | the `Sdks` directory (see [Requirements](#requirements))                                    |
+| `device`              | `nil`       | device id for type-checking, leave unset unless you need it                                 |
+| `developer_key`       | `nil`       | path to the `.der` key used to sign builds                                                  |
 
 ## Commands
 
-| command                              | action                                                         |
-| ------------------------------------ | -------------------------------------------------------------- |
-| `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt)   |
-| `:MonkeyC build-for-device [device]` | build `bin/<project>.prg` for `device`                         |
-| `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it            |
-| `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator          |
-| `:MonkeyC debug [device]`            | build, start the simulator, and debug via DAP (needs nvim-dap) |
-| `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)          |
-| `:MonkeyC generate-key [path]`       | generate a developer key (RSA 4096, PKCS8 DER) via openssl     |
-| `:MonkeyC new-project [dir]`         | scaffold a new project from an SDK template (prompts)          |
-| `:MonkeyC regenerate-uuid`           | give the manifest a fresh application id                       |
-| `:MonkeyC edit-products`             | choose the manifest's target devices (checkbox buffer)         |
-| `:MonkeyC edit-permissions`          | edit the manifest's permissions                                |
-| `:MonkeyC edit-languages`            | edit the manifest's languages                                  |
-| `:MonkeyC edit-annotations`          | edit the manifest's annotations                                |
-| `:MonkeyC edit-application`          | edit application type and minimum API level                    |
-| `:MonkeyC clean`                     | remove the `bin/` build output directory                       |
-| `:MonkeyC logs`                      | open the last build's full output in a split                   |
-| `:MonkeyC cancel`                    | stop the running build                                         |
-| `:MonkeyC sdk-manager`               | open the Connect IQ SDK Manager                                |
-| `:MonkeyC docs`                      | pick a bundled SDK doc (API reference, guides) to open         |
-| `:MonkeyC samples`                   | open the SDK's samples directory                               |
-| `:MonkeyC monkey-graph`              | launch Monkey Graph (FIT graphing)                             |
-| `:MonkeyC monkey-motion`             | launch Monkey Motion                                           |
-| `:MonkeyC era`                       | launch the ERA viewer                                          |
+| command                                  | action                                                         |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `:MonkeyC build`                         | build `bin/<project>.prg` for the default device (no prompt)   |
+| `:MonkeyC build-for-device [device]`     | build `bin/<project>.prg` for `device`                         |
+| `:MonkeyC run [device]`                  | build, launch the simulator, and push the app to it            |
+| `:MonkeyC test [device]`                 | build unit tests (`-t`) and run them in the simulator          |
+| `:MonkeyC debug [device]`                | build, start the simulator, and debug via DAP (needs nvim-dap) |
+| `:MonkeyC debug-native-pairing [device]` | debug in sensor (ANT/BLE) native pairing mode                  |
+| `:MonkeyC export [path]`                 | package a `.iq` for the store (all products, release)          |
+| `:MonkeyC generate-key [path]`           | generate a developer key (RSA 4096, PKCS8 DER) via openssl     |
+| `:MonkeyC new-project [dir]`             | scaffold a new project from an SDK template (prompts)          |
+| `:MonkeyC regenerate-uuid`               | give the manifest a fresh application id                       |
+| `:MonkeyC edit-products`                 | choose the manifest's target devices (checkbox buffer)         |
+| `:MonkeyC edit-permissions`              | edit the manifest's permissions                                |
+| `:MonkeyC edit-languages`                | edit the manifest's languages                                  |
+| `:MonkeyC edit-annotations`              | edit the manifest's annotations                                |
+| `:MonkeyC edit-application`              | edit application type and minimum API level                    |
+| `:MonkeyC clean`                         | remove the `bin/` build output directory                       |
+| `:MonkeyC logs`                          | open the last build's full output in a split                   |
+| `:MonkeyC cancel`                        | stop the running build                                         |
+| `:MonkeyC sdk-manager`                   | open the Connect IQ SDK Manager                                |
+| `:MonkeyC docs`                          | pick a bundled SDK doc (API reference, guides) to open         |
+| `:MonkeyC samples`                       | open the SDK's samples directory                               |
+| `:MonkeyC monkey-graph`                  | launch Monkey Graph (FIT graphing)                             |
+| `:MonkeyC monkey-motion`                 | launch Monkey Motion                                           |
+| `:MonkeyC era`                           | launch the ERA viewer                                          |
 
 A few things to know:
 
@@ -134,6 +136,10 @@ standard debug adapter (a Java DAP server in `monkeybrains.jar`), so the plugin
 just wires it up. It builds a non-release build, starts the simulator, waits for
 its debug port, and hands off to nvim-dap. Breakpoints, stepping, the call stack,
 variables, and expression evaluation all work through nvim-dap.
+
+`:MonkeyC debug-native-pairing [device]` is the same flow run in sensor native
+pairing mode, for apps and data fields that pair with ANT/BLE sensors through a
+`SensorDelegate`.
 
 nvim-dap is optional. Everything else works without it, and the adapter registers
 only when nvim-dap is present. Debugging needs an SDK >= 2.3.0. Variables are
