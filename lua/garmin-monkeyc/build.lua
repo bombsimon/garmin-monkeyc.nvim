@@ -410,6 +410,118 @@ function M.generate_key(path)
   end)
 end
 
+-- Literal (non-pattern) find/replace, escaping magic in the pattern and % in
+-- the replacement so user-supplied names are safe.
+local function replace_all(text, find, repl)
+  local pattern = find:gsub("[%(%)%.%%%+%-%*%?%[%]%^%$]", "%%%1")
+
+  return (text:gsub(pattern, (repl:gsub("%%", "%%%%"))))
+end
+
+-- RSA-free v4 UUID (for the manifest application id).
+local function uuid()
+  math.randomseed(vim.uv.hrtime())
+
+  return (
+    ("xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"):gsub("[xy]", function(c)
+      return ("%x"):format(c == "x" and math.random(0, 15) or math.random(8, 11))
+    end)
+  )
+end
+
+-- App types we scaffold (each has an SDK template with the standard
+-- app/view/delegate placeholder set).
+local new_project_types = { "watch-app", "watchface", "datafield", "widget" }
+
+local function scaffold(name, app_type, dir)
+  local template = sdk.template_dir(config.options.sdk_path, app_type)
+
+  if not template then
+    return notify("no template found for " .. app_type, vim.log.levels.ERROR)
+  end
+
+  if vim.uv.fs_stat(dir) then
+    return notify(dir .. " already exists", vim.log.levels.ERROR)
+  end
+
+  vim.fn.mkdir(vim.fs.dirname(dir), "p")
+
+  local copied = vim.fn.system({ "cp", "-R", template, dir })
+  if vim.v.shell_error ~= 0 then
+    return notify("failed to copy template: " .. copied, vim.log.levels.ERROR)
+  end
+
+  -- Class names derive from a PascalCase base of the project name.
+  local base = name:gsub("[^%w]", "")
+  base = base:sub(1, 1):upper() .. base:sub(2)
+  if base == "" or base:match("^%d") then
+    base = "App" .. base
+  end
+
+  local subs = {
+    ["${appName}"] = name,
+    ["${appClassName}"] = base .. "App",
+    ["${viewClassName}"] = base .. "View",
+    ["${delegateClassName}"] = base .. "Delegate",
+    ["${menuDelegateClassName}"] = base .. "MenuDelegate",
+  }
+
+  for _, file in
+    ipairs(vim.fs.find(function()
+      return true
+    end, { path = dir, type = "file", limit = math.huge }))
+  do
+    if file:match("%.mc$") or file:match("%.xml$") or file:match("%.jungle$") then
+      local content = table.concat(vim.fn.readfile(file), "\n")
+
+      for find, repl in pairs(subs) do
+        content = replace_all(content, find, repl)
+      end
+
+      vim.fn.writefile(vim.split(content, "\n"), file)
+    end
+  end
+
+  -- Fill the empty manifest attributes the template leaves for us.
+  local manifest = vim.fs.joinpath(dir, "manifest.xml")
+  local m = table.concat(vim.fn.readfile(manifest), "\n")
+  m = m:gsub('id=""', 'id="' .. uuid() .. '"')
+    :gsub('type=""', 'type="' .. app_type .. '"')
+    :gsub('name=""', 'name="@Strings.AppName"')
+    :gsub('entry=""', 'entry="' .. base .. 'App"')
+    :gsub('launcherIcon=""', 'launcherIcon="@Drawables.LauncherIcon"')
+    :gsub('minApiLevel=""', 'minApiLevel="1.0.0"')
+  vim.fn.writefile(vim.split(m, "\n"), manifest)
+
+  notify(("created %s (add products to manifest.xml before building)"):format(dir))
+
+  local app = vim.fs.joinpath(dir, "source", "App.mc")
+  if vim.uv.fs_stat(app) then
+    vim.cmd.edit(app)
+  end
+end
+
+-- Scaffold a new project from an SDK template. Prompts for a name and type;
+-- {dir} defaults to <cwd>/<name>.
+function M.new_project(dir)
+  vim.ui.input({ prompt = "New Monkey C project name: " }, function(name)
+    if not name or name == "" then
+      return
+    end
+
+    vim.ui.select(new_project_types, { prompt = "App type" }, function(app_type)
+      if not app_type then
+        return
+      end
+
+      local target = (dir and dir ~= "" and vim.fn.expand(dir))
+        or vim.fs.joinpath(vim.uv.cwd(), (name:gsub("%s+", "-")))
+
+      scaffold(name, app_type, target)
+    end)
+  end)
+end
+
 -- Stop the running build.
 function M.cancel()
   if not current_build then
@@ -448,6 +560,7 @@ local subcommands = {
   ["test"] = M.test,
   ["export"] = M.export,
   ["generate-key"] = M.generate_key,
+  ["new-project"] = M.new_project,
   ["clean"] = M.clean,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,
@@ -464,6 +577,7 @@ local device_subcommands = {
 local path_subcommands = {
   ["export"] = true,
   ["generate-key"] = true,
+  ["new-project"] = true,
 }
 
 function M.setup()

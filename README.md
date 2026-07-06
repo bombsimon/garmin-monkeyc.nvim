@@ -19,7 +19,7 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] Clean project - `:MonkeyC clean`
 - [x] Run unit tests - `:MonkeyC test [device]`
 - [x] Export project (`.iq` for the Connect IQ Store) - `:MonkeyC export [path]`
-- [ ] New project
+- [x] New project - `:MonkeyC new-project [dir]`
 - [x] Generate a developer key - `:MonkeyC generate-key [path]`
 - [x] Verify installation - `:checkhealth garmin-monkeyc`
 - [ ] Edit manifest (products, permissions, languages, application, annotations)
@@ -124,6 +124,7 @@ Requires a **developer key** to pass to the compiler when building, set
 | `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator        |
 | `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)        |
 | `:MonkeyC generate-key [path]`       | generate a developer key (RSA 4096, PKCS8 DER) via openssl   |
+| `:MonkeyC new-project [dir]`         | scaffold a new project from an SDK template (prompts)        |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 | `:MonkeyC logs`                      | open the last build's full output in a split                 |
 | `:MonkeyC cancel`                    | stop the running build                                       |

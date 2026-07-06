@@ -64,6 +64,10 @@ function M.generate_key(path)
   return require("garmin-monkeyc.build").generate_key(path)
 end
 
+function M.new_project(dir)
+  return require("garmin-monkeyc.build").new_project(dir)
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end

@@ -52,6 +52,23 @@ function M.devices_path(sdk_path)
   return vim.fs.joinpath(vim.fs.dirname(sdk_path), "Devices")
 end
 
+-- Project template directory for an app type ("watch-app", "watchface",
+-- "datafield", "widget", ...), preferring the "simple" variant.
+function M.template_dir(sdk_path, app_type)
+  local base = M.newest_sdk(sdk_path)
+
+  if not base then
+    return nil
+  end
+
+  local simple = vim.fs.joinpath(base, "bin", "templates", app_type, "simple")
+  if vim.uv.fs_stat(simple) then
+    return simple
+  end
+
+  return vim.fn.glob(vim.fs.joinpath(base, "bin", "templates", app_type, "*"), false, true)[1]
+end
+
 -- Friendly device name from the installed device's compiler.json displayName
 -- (e.g. "fēnix® 7 / quatix® 7"), or nil if the device isn't installed.
 function M.friendly_name(sdk_path, device_id)
