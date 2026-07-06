@@ -1,0 +1,171 @@
+*garmin-monkeyc.txt*        Garmin Connect IQ (Monkey C) support for Neovim
+
+==============================================================================
+CONTENTS                                             *garmin-monkeyc-contents*
+
+    1. Introduction .................. |garmin-monkeyc-introduction|
+    2. Requirements .................. |garmin-monkeyc-requirements|
+    3. Setup ......................... |garmin-monkeyc-setup|
+    4. Configuration ................. |garmin-monkeyc-configuration|
+    5. Commands ...................... |garmin-monkeyc-commands|
+    6. Lua API ....................... |garmin-monkeyc-api|
+    7. Health check .................. |garmin-monkeyc-health|
+
+==============================================================================
+1. Introduction                *garmin-monkeyc* *garmin-monkeyc-introduction*
+
+garmin-monkeyc.nvim is a Neovim port of the official Monkey C VS Code
+extension. It sets up the language server shipped as `LanguageServer.jar`
+inside the Connect IQ SDK (working around a few quirks that otherwise break it
+with a plain LSP client) and adds build, run and test commands that call the
+SDK toolchain. See |:MonkeyC|.
+
+`.mc` files are registered as filetype `monkeyc` automatically.
+
+==============================================================================
+2. Requirements                              *garmin-monkeyc-requirements*
+
+- Neovim 0.11+ (uses |vim.lsp.config()| / |vim.lsp.enable()|).
+- A Garmin Connect IQ SDK installed via the SDK Manager, with at least one
+  device downloaded.
+- `java` on $PATH.
+- A developer key (`.der`) to build/run/test (see |garmin-monkeyc-setup|).
+
+Run |:checkhealth| garmin-monkeyc to verify the setup, see
+|garmin-monkeyc-health|.
+
+==============================================================================
+3. Setup                                            *garmin-monkeyc-setup*
+
+Call the setup function once (all options are optional): >lua
+
+    require("garmin-monkeyc").setup({
+      capabilities = require("cmp_nvim_lsp").default_capabilities(),
+      on_attach = my_on_attach,
+      type_check_level = "Default",
+      function_completion = "snippet",
+      developer_key = "~/.garmin/developer_key.der",
+    })
+<
+The plugin registers the `monkeyc-lsp` language server and the |:MonkeyC|
+command.
+
+No developer key yet? Generate one with: >
+
+    openssl genrsa -out key.pem 4096
+    openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+      -in key.pem -out developer_key.der
+<
+==============================================================================
+4. Configuration                            *garmin-monkeyc-configuration*
+
+Options accepted by |garmin-monkeyc.setup()|:
+
+                                        *garmin-monkeyc-config-capabilities*
+capabilities            table|nil (default: nil)
+        Base LSP client capabilities, merged with the overrides the server
+        requires.
+
+                                        *garmin-monkeyc-config-on_attach*
+on_attach               function|nil (default: nil)
+        Called when the language server attaches to a buffer.
+
+                                        *garmin-monkeyc-config-type_check_level*
+type_check_level        string (default: "Default")
+        One of "Default", "Off", "Gradual", "Informative", "Strict". Used both
+        for LSP type checking and as the compiler `-l` level when building.
+
+                                        *garmin-monkeyc-config-function_completion*
+function_completion     string (default: "snippet")
+        "snippet" inserts `name()` with the cursor between the parens (needs a
+        snippet engine); "strip" inserts just `name`.
+
+                                        *garmin-monkeyc-config-sdk_path*
+sdk_path                string|nil (default: per-OS)
+        The "Sdks" directory to search for the SDK. Detected per OS; override
+        if your install differs.
+
+                                        *garmin-monkeyc-config-device*
+device                  string|nil (default: nil)
+        Device id to type-check against, and the default device for |:MonkeyC|
+        build/run/test. When unset, those commands prompt for a device.
+
+                                        *garmin-monkeyc-config-developer_key*
+developer_key           string|nil (default: nil)
+        Path to the developer key (`.der`) used to sign builds. Required by the
+        build/run/test commands.
+
+==============================================================================
+5. Commands                            *garmin-monkeyc-commands* *MonkeyC*
+
+:MonkeyC {subcommand} [{device}]                                   *:MonkeyC*
+        Build, run and test Monkey C projects with the SDK toolchain.
+
+        When a subcommand takes {device} and you omit it, the device falls back
+        to the |garmin-monkeyc-config-device| option, and if that is unset you
+        get a picker of the devices in `manifest.xml` (with friendly names).
+        With telescope-ui-select or dressing.nvim installed the picker is a
+        fuzzy finder. Device ids tab-complete too. Build errors go to the
+        |quickfix| list.
+
+        Building requires |garmin-monkeyc-config-developer_key|.
+
+Subcommands:                                                   *MonkeyC-build*
+                                                    *MonkeyC-build-for-device*
+                                                                 *MonkeyC-run*
+                                                                *MonkeyC-test*
+                                                               *MonkeyC-clean*
+
+    build                 Build the current project for the default device
+                          (no prompt): |garmin-monkeyc-config-device| else the
+                          first product in `manifest.xml`.
+
+    build-for-device [{device}]
+                          Build for {device}; prompts when omitted.
+
+    run [{device}]        Build, launch the simulator, and run the app in it.
+
+    test [{device}]       Build the unit tests (`-t`) and run them in the
+                          simulator.
+
+    clean                 Remove the `bin/` build output directory.
+
+==============================================================================
+6. Lua API                                            *garmin-monkeyc-api*
+
+require("garmin-monkeyc").setup({opts})            *garmin-monkeyc.setup()*
+        See |garmin-monkeyc-setup| and |garmin-monkeyc-configuration|.
+
+require("garmin-monkeyc").hover()                  *garmin-monkeyc.hover()*
+        Hover with the server's VS Code-flavored HTML cleaned to Markdown.
+        Falls back to |vim.lsp.buf.hover()| when no Monkey C client is
+        attached, so it is safe to map unconditionally: >lua
+
+            vim.keymap.set("n", "K", require("garmin-monkeyc").hover)
+<
+require("garmin-monkeyc").signature_help()  *garmin-monkeyc.signature_help()*
+        Signature help that sends the context the server requires (plain
+        |vim.lsp.buf.signature_help()| errors on this server). Falls back to
+        the builtin when no Monkey C client is attached.
+
+require("garmin-monkeyc").build([{device}])        *garmin-monkeyc.build()*
+require("garmin-monkeyc").build_for_device([{device}])
+require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
+require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
+require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
+        The functions behind the |:MonkeyC| subcommands, exposed for mappings.
+
+require("garmin-monkeyc").type_check_levels        *garmin-monkeyc.type_check_levels*
+        List of valid |garmin-monkeyc-config-type_check_level| values.
+
+==============================================================================
+7. Health check                                    *garmin-monkeyc-health*
+
+>vim
+    :checkhealth garmin-monkeyc
+<
+Reports the detected SDK path and version, `LanguageServer.jar`, the
+`monkeyc`/`monkeydo`/`connectiq` tools, `java`, the installed device count, the
+developer key, and whether the language server is attached.
+
+vim:tw=78:ts=8:et:ft=help:norl:

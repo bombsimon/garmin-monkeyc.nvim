@@ -72,7 +72,7 @@ With [lazy.nvim]:
 ```
 
 The plugin registers `.mc` as filetype `monkeyc` itself (via `ftdetect/`,
-sourced at startup) — Neovim's builtin runtime otherwise detects `.mc` as `m4`.
+sourced at startup). Neovim's builtin runtime otherwise detects `.mc` as `m4`.
 
 ### Cleaned hover
 
@@ -141,7 +141,7 @@ the first product in `manifest.xml`.
 
 ### Health check
 
-Run `:checkhealth garmin-monkeyc` to verify the setup — it reports the detected
+Run `:checkhealth garmin-monkeyc` to verify the setup. It reports the detected
 SDK, `LanguageServer.jar`, the `monkeyc`/`monkeydo`/`connectiq` tools, `java`, the
 installed device count, the developer key, and whether the language server is
 attached.
