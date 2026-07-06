@@ -120,6 +120,12 @@ Subcommands:                                                   *MonkeyC-build*
                                                                *MonkeyC-clean*
                                                                 *MonkeyC-logs*
                                                               *MonkeyC-cancel*
+                                                         *MonkeyC-sdk-manager*
+                                                                *MonkeyC-docs*
+                                                             *MonkeyC-samples*
+                                                        *MonkeyC-monkey-graph*
+                                                       *MonkeyC-monkey-motion*
+                                                                 *MonkeyC-era*
 
     build                 Build the current project for the default device
                           (no prompt): |garmin-monkeyc-config-device| else the
@@ -162,6 +168,20 @@ Subcommands:                                                   *MonkeyC-build*
                           time; starting another while one is in progress is
                           refused.
 
+    sdk-manager           Open the Connect IQ SDK Manager.
+
+    docs                  Pick from the SDK's bundled documentation (API
+                          reference and topic guides) and open it in a browser.
+                          Falls back to the online docs if none are bundled.
+
+    samples               Open the SDK's samples directory.
+
+    monkey-graph          Launch Monkey Graph (FIT graphing tool).
+
+    monkey-motion         Launch Monkey Motion.
+
+    era                   Launch the ERA viewer.
+
 ==============================================================================
 6. Lua API                                            *garmin-monkeyc-api*
 
@@ -188,6 +208,12 @@ require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").new_project([{dir}])     *garmin-monkeyc.new_project()*
 require("garmin-monkeyc").regenerate_uuid()        *garmin-monkeyc.regenerate_uuid()*
+require("garmin-monkeyc").docs()                   *garmin-monkeyc.docs()*
+require("garmin-monkeyc").samples()                *garmin-monkeyc.samples()*
+require("garmin-monkeyc").sdk_manager()            *garmin-monkeyc.sdk_manager()*
+require("garmin-monkeyc").monkey_graph()           *garmin-monkeyc.monkey_graph()*
+require("garmin-monkeyc").monkey_motion()          *garmin-monkeyc.monkey_motion()*
+require("garmin-monkeyc").era()                    *garmin-monkeyc.era()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
 require("garmin-monkeyc").logs()                   *garmin-monkeyc.logs()*
 require("garmin-monkeyc").cancel()                 *garmin-monkeyc.cancel()*

@@ -4,6 +4,7 @@
 
 local config = require("garmin-monkeyc.config")
 local sdk = require("garmin-monkeyc.sdk")
+local tools = require("garmin-monkeyc.tools")
 
 local M = {}
 
@@ -588,6 +589,12 @@ local subcommands = {
   ["clean"] = M.clean,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,
+  ["sdk-manager"] = tools.sdk_manager,
+  ["docs"] = tools.docs,
+  ["samples"] = tools.samples,
+  ["monkey-graph"] = tools.monkey_graph,
+  ["monkey-motion"] = tools.monkey_motion,
+  ["era"] = tools.era,
 }
 
 -- Subcommands whose argument is a device id (used to scope completion).

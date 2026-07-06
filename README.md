@@ -25,9 +25,9 @@ Tracking parity with the [official VS Code extension][vscode].
 - [ ] Edit manifest (products, permissions, languages, application, annotations)
 - [x] Regenerate UUID - `:MonkeyC regenerate-uuid`
 - [ ] Debugger (DAP)
-- [ ] Open SDK Manager
-- [ ] View documentation / open samples
-- [ ] External tools (Monkey Graph, Monkey Motion, ERA Viewer)
+- [x] Open SDK Manager - `:MonkeyC sdk-manager`
+- [x] View documentation / open samples - `:MonkeyC docs` / `:MonkeyC samples`
+- [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
 - [ ] Configure barrel
 - [ ] Native pairing / complication launch
 
@@ -129,6 +129,12 @@ Requires a **developer key** to pass to the compiler when building, set
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 | `:MonkeyC logs`                      | open the last build's full output in a split                 |
 | `:MonkeyC cancel`                    | stop the running build                                       |
+| `:MonkeyC sdk-manager`               | open the Connect IQ SDK Manager                              |
+| `:MonkeyC docs`                      | pick a bundled SDK doc (API reference, guides) to open       |
+| `:MonkeyC samples`                   | open the SDK's samples directory                             |
+| `:MonkeyC monkey-graph`              | launch Monkey Graph (FIT graphing)                           |
+| `:MonkeyC monkey-motion`             | launch Monkey Motion                                         |
+| `:MonkeyC era`                       | launch the ERA viewer                                        |
 
 Builds stream progress (e.g. `export` packages every product, so you get
 `exporting (42/234 devices)` on the command line). The full compiler output,

@@ -72,6 +72,31 @@ function M.regenerate_uuid()
   return require("garmin-monkeyc.build").regenerate_uuid()
 end
 
+-- SDK tool / documentation launchers.
+function M.docs()
+  return require("garmin-monkeyc.tools").docs()
+end
+
+function M.samples()
+  return require("garmin-monkeyc.tools").samples()
+end
+
+function M.sdk_manager()
+  return require("garmin-monkeyc.tools").sdk_manager()
+end
+
+function M.monkey_graph()
+  return require("garmin-monkeyc.tools").monkey_graph()
+end
+
+function M.monkey_motion()
+  return require("garmin-monkeyc.tools").monkey_motion()
+end
+
+function M.era()
+  return require("garmin-monkeyc.tools").era()
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end
