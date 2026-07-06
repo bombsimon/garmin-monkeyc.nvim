@@ -52,6 +52,10 @@ function M.export(output)
   return require("garmin-monkeyc.build").export(output)
 end
 
+function M.logs()
+  return require("garmin-monkeyc.build").logs()
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end

@@ -136,6 +136,12 @@ Then:
 | `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator        |
 | `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)        |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
+| `:MonkeyC logs`                      | open the last build's full output in a split                 |
+
+Builds stream progress (e.g. `export` packages every product, so you get
+`exporting (42/234 devices)` on the command line). The full compiler output,
+including all warnings, is kept for `:MonkeyC logs`; on failure the errors also
+go to the quickfix list.
 
 `:MonkeyC build` uses the `device` option as the default device, falling back to
 the first product in `manifest.xml`.

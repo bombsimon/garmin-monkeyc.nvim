@@ -20,6 +20,30 @@ local function notify(message, level)
   vim.notify("garmin-monkeyc: " .. message, level or vim.log.levels.INFO)
 end
 
+-- Transient progress on the command line (does not spam :messages).
+local function echo(message)
+  vim.api.nvim_echo({ { "garmin-monkeyc: " .. message } }, false, {})
+end
+
+-- Output of the most recent build, shown by :MonkeyC logs (see M.logs).
+local log_lines = {}
+local log_bufnr
+
+-- Refresh the log buffer if it is open, keeping any window scrolled to the end.
+local function render_log()
+  if not (log_bufnr and vim.api.nvim_buf_is_loaded(log_bufnr)) then
+    return
+  end
+
+  vim.bo[log_bufnr].modifiable = true
+  vim.api.nvim_buf_set_lines(log_bufnr, 0, -1, false, log_lines)
+  vim.bo[log_bufnr].modifiable = false
+
+  for _, win in ipairs(vim.fn.win_findbuf(log_bufnr)) do
+    vim.api.nvim_win_set_cursor(win, { #log_lines, 0 })
+  end
+end
+
 -- Project directory for the current buffer (the dir holding manifest.xml).
 local function project_directory()
   local root = vim.fs.root(0, { "manifest.xml", ".git" }) or vim.uv.cwd()
@@ -92,9 +116,38 @@ local function compile(opts)
     vim.list_extend(args, { "-l", flag })
   end
 
-  notify((opts.label or ("building for " .. opts.device)) .. "…")
+  local label = opts.label or ("building for " .. opts.device)
+  notify(label .. "…")
 
-  vim.system(args, { text = true, cwd = directory }, function(result)
+  -- Stream output so we can show per-device progress and keep a full log.
+  -- monkeyc prints "N OUT OF M DEVICES BUILT" as it packages each product.
+  local header = table.concat(args, " ")
+  local chunks = {}
+
+  local function on_output(_, data)
+    if not data then
+      return
+    end
+
+    chunks[#chunks + 1] = data
+
+    vim.schedule(function()
+      local text = table.concat(chunks)
+      log_lines = vim.split(header .. "\n\n" .. text, "\n", { trimempty = false })
+      render_log()
+
+      local built, total
+      for n, m in text:gmatch("(%d+) OUT OF (%d+) DEVICES BUILT") do
+        built, total = n, m
+      end
+
+      if built then
+        echo(("%s (%s/%s devices)"):format(label, built, total))
+      end
+    end)
+  end
+
+  vim.system(args, { text = true, cwd = directory, stdout = on_output, stderr = on_output }, function(result)
     vim.schedule(function()
       if result.code == 0 then
         notify(("built %s"):format(output))
@@ -103,12 +156,9 @@ local function compile(opts)
           opts.on_success(output)
         end
       else
-        notify("build failed", vim.log.levels.ERROR)
+        notify("build failed (see :MonkeyC logs)", vim.log.levels.ERROR)
 
-        vim.fn.setqflist({}, " ", {
-          title = "MonkeyC build",
-          lines = vim.split((result.stdout or "") .. (result.stderr or ""), "\n", { trimempty = true }),
-        })
+        vim.fn.setqflist({}, " ", { title = "MonkeyC build", lines = log_lines })
         vim.cmd("botright copen")
       end
     end)
@@ -272,6 +322,27 @@ function M.clean()
   notify("removed " .. bin)
 end
 
+-- Open the most recent build's full output in a split. Updates live while a
+-- build is running.
+function M.logs()
+  if not (log_bufnr and vim.api.nvim_buf_is_valid(log_bufnr)) then
+    log_bufnr = vim.api.nvim_create_buf(false, true)
+    vim.bo[log_bufnr].filetype = "log"
+    pcall(vim.api.nvim_buf_set_name, log_bufnr, "MonkeyC build log")
+  end
+
+  if #log_lines == 0 then
+    log_lines = { "No build has run yet." }
+  end
+
+  if #vim.fn.win_findbuf(log_bufnr) == 0 then
+    vim.cmd("botright split")
+    vim.api.nvim_win_set_buf(0, log_bufnr)
+  end
+
+  render_log()
+end
+
 local subcommands = {
   ["build"] = M.build,
   ["build-for-device"] = M.build_for_device,
@@ -279,6 +350,7 @@ local subcommands = {
   ["test"] = M.test,
   ["export"] = M.export,
   ["clean"] = M.clean,
+  ["logs"] = M.logs,
 }
 
 -- Subcommands whose argument is a device id (used to scope completion).

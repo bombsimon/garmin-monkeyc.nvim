@@ -110,12 +110,17 @@ developer_key           string|nil (default: nil)
 
         Building requires |garmin-monkeyc-config-developer_key|.
 
+Progress is shown on the command line as products build (export packages every
+product in the manifest, so it can take a while). The full compiler output is
+kept for |MonkeyC-logs|; on failure the errors also go to the |quickfix| list.
+
 Subcommands:                                                   *MonkeyC-build*
                                                     *MonkeyC-build-for-device*
                                                                  *MonkeyC-run*
                                                                 *MonkeyC-test*
                                                               *MonkeyC-export*
                                                                *MonkeyC-clean*
+                                                                *MonkeyC-logs*
 
     build                 Build the current project for the default device
                           (no prompt): |garmin-monkeyc-config-device| else the
@@ -134,6 +139,9 @@ Subcommands:                                                   *MonkeyC-build*
                           file or directory; defaults to `bin/<project>.iq`.
 
     clean                 Remove the `bin/` build output directory.
+
+    logs                  Open the most recent build's full output in a split.
+                          Updates live while a build runs.
 
 ==============================================================================
 6. Lua API                                            *garmin-monkeyc-api*
@@ -159,6 +167,7 @@ require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
 require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
+require("garmin-monkeyc").logs()                   *garmin-monkeyc.logs()*
         The functions behind the |:MonkeyC| subcommands, exposed for mappings.
 
 require("garmin-monkeyc").type_check_levels        *garmin-monkeyc.type_check_levels*
