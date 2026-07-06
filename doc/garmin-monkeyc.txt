@@ -121,6 +121,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                               *MonkeyC-export*
                                                                *MonkeyC-clean*
                                                                 *MonkeyC-logs*
+                                                              *MonkeyC-cancel*
 
     build                 Build the current project for the default device
                           (no prompt): |garmin-monkeyc-config-device| else the
@@ -142,6 +143,10 @@ Subcommands:                                                   *MonkeyC-build*
 
     logs                  Open the most recent build's full output in a split.
                           Updates live while a build runs.
+
+    cancel                Stop the running build. Only one build runs at a
+                          time; starting another while one is in progress is
+                          refused.
 
 ==============================================================================
 6. Lua API                                            *garmin-monkeyc-api*
@@ -168,6 +173,7 @@ require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
 require("garmin-monkeyc").logs()                   *garmin-monkeyc.logs()*
+require("garmin-monkeyc").cancel()                 *garmin-monkeyc.cancel()*
         The functions behind the |:MonkeyC| subcommands, exposed for mappings.
 
 require("garmin-monkeyc").type_check_levels        *garmin-monkeyc.type_check_levels*

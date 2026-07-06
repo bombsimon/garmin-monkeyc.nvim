@@ -29,6 +29,11 @@ end
 local log_lines = {}
 local log_bufnr
 
+-- The running build process (vim.system handle) and whether it was cancelled,
+-- so :MonkeyC cancel can stop it and we can tell cancel from failure.
+local current_build
+local cancelled = false
+
 -- Refresh the log buffer if it is open, keeping any window scrolled to the end.
 local function render_log()
   if not (log_bufnr and vim.api.nvim_buf_is_loaded(log_bufnr)) then
@@ -71,16 +76,20 @@ end
 local function compile(opts)
   opts = opts or {}
 
+  if current_build then
+    return notify("a build is already running (:MonkeyC cancel to stop it)", vim.log.levels.WARN)
+  end
+
   local options = config.options
 
   if not (options.developer_key and vim.uv.fs_stat(options.developer_key)) then
     return notify("set developer_key to a valid .der to build (see :MonkeyC or the README)", vim.log.levels.ERROR)
   end
 
-  local monkeyc = sdk.tool(options.sdk_path, "monkeyc")
+  local jar = sdk.tool(options.sdk_path, "monkeybrains.jar")
 
-  if not monkeyc then
-    return notify("monkeyc not found under " .. options.sdk_path, vim.log.levels.ERROR)
+  if not jar then
+    return notify("monkeybrains.jar not found under " .. options.sdk_path, vim.log.levels.ERROR)
   end
 
   local directory = project_directory()
@@ -88,8 +97,17 @@ local function compile(opts)
 
   vim.fn.mkdir(vim.fs.dirname(output), "p")
 
+  -- Invoke the compiler jar directly (like the VS Code extension) rather than
+  -- the monkeyc shell wrapper, so the process we spawn is the JVM itself and
+  -- :MonkeyC cancel can kill it. -Dapple.awt.UIElement=true keeps it off the
+  -- macOS Dock.
   local args = {
-    monkeyc,
+    "java",
+    "-Xms1g",
+    "-Dfile.encoding=UTF-8",
+    "-Dapple.awt.UIElement=true",
+    "-jar",
+    jar,
     "-f",
     table.concat(sdk.jungle_files(directory), ";"),
     "-o",
@@ -147,22 +165,34 @@ local function compile(opts)
     end)
   end
 
-  vim.system(args, { text = true, cwd = directory, stdout = on_output, stderr = on_output }, function(result)
-    vim.schedule(function()
-      if result.code == 0 then
-        notify(("built %s"):format(output))
+  current_build = vim.system(
+    args,
+    { text = true, cwd = directory, stdout = on_output, stderr = on_output },
+    function(result)
+      vim.schedule(function()
+        current_build = nil
 
-        if opts.on_success then
-          opts.on_success(output)
+        if cancelled then
+          cancelled = false
+
+          return notify("build cancelled")
         end
-      else
-        notify("build failed (see :MonkeyC logs)", vim.log.levels.ERROR)
 
-        vim.fn.setqflist({}, " ", { title = "MonkeyC build", lines = log_lines })
-        vim.cmd("botright copen")
-      end
-    end)
-  end)
+        if result.code == 0 then
+          notify(("built %s"):format(output))
+
+          if opts.on_success then
+            opts.on_success(output)
+          end
+        else
+          notify("build failed (see :MonkeyC logs)", vim.log.levels.ERROR)
+
+          vim.fn.setqflist({}, " ", { title = "MonkeyC build", lines = log_lines })
+          vim.cmd("botright copen")
+        end
+      end)
+    end
+  )
 end
 
 -- Launch the simulator (if needed) and push the built prg to it. opts.unit_test
@@ -322,6 +352,16 @@ function M.clean()
   notify("removed " .. bin)
 end
 
+-- Stop the running build.
+function M.cancel()
+  if not current_build then
+    return notify("no build is running")
+  end
+
+  cancelled = true
+  current_build:kill("sigterm")
+end
+
 -- Open the most recent build's full output in a split. Updates live while a
 -- build is running.
 function M.logs()
@@ -351,6 +391,7 @@ local subcommands = {
   ["export"] = M.export,
   ["clean"] = M.clean,
   ["logs"] = M.logs,
+  ["cancel"] = M.cancel,
 }
 
 -- Subcommands whose argument is a device id (used to scope completion).

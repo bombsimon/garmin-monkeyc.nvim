@@ -137,6 +137,7 @@ Then:
 | `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)        |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 | `:MonkeyC logs`                      | open the last build's full output in a split                 |
+| `:MonkeyC cancel`                    | stop the running build                                       |
 
 Builds stream progress (e.g. `export` packages every product, so you get
 `exporting (42/234 devices)` on the command line). The full compiler output,

@@ -56,6 +56,10 @@ function M.logs()
   return require("garmin-monkeyc.build").logs()
 end
 
+function M.cancel()
+  return require("garmin-monkeyc.build").cancel()
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end
