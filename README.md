@@ -1,33 +1,30 @@
 # garmin-monkeyc.nvim
 
-Neovim port of the [official Monkey C VS Code extension][vscode], with LSP
-support for the language server shipped as `LanguageServer.jar` inside the
-[Connect IQ SDK][ciq].
-
-For more details around LSP documentation, see [LSP_DOCS.md][lsp-docs].
+Neovim port of the [official Monkey C VS Code extension][vscode]. It wires up the
+language server shipped as `LanguageServer.jar` in the [Connect IQ SDK][ciq] and
+adds the SDK build, run, test, debug, and project commands.
 
 ## Feature parity
 
-Tracking parity with the [official VS Code extension][vscode].
+Tracking the [VS Code extension][vscode].
 
-- [x] Language server - hover, completion, goto-definition, references, rename,
-      document/workspace symbols, folding, call/type hierarchy (see
-      [LSP capabilities](#lsp-capabilities))
+- [x] Language server: hover, completion, goto-definition, references, rename,
+      symbols, folding, call/type hierarchy (see [LSP](#lsp))
 - [x] Build for device - `:MonkeyC build-for-device [device]`
-- [x] Run in simulator - `:MonkeyC run [device]`
 - [x] Build current project - `:MonkeyC build`
-- [x] Clean project - `:MonkeyC clean`
+- [x] Run in simulator - `:MonkeyC run [device]`
 - [x] Run unit tests - `:MonkeyC test [device]`
-- [x] Export project (`.iq` for the Connect IQ Store) - `:MonkeyC export [path]`
+- [x] Debug (DAP) - `:MonkeyC debug [device]` (needs [nvim-dap])
+- [x] Clean project - `:MonkeyC clean`
+- [x] Export `.iq` for the Connect IQ Store - `:MonkeyC export [path]`
 - [x] New project - `:MonkeyC new-project [dir]`
 - [x] Generate a developer key - `:MonkeyC generate-key [path]`
-- [x] Verify installation - `:checkhealth garmin-monkeyc`
 - [x] Edit manifest - `:MonkeyC edit-products` / `edit-permissions` /
       `edit-languages` / `edit-annotations` / `edit-application`
 - [x] Regenerate UUID - `:MonkeyC regenerate-uuid`
-- [x] Debugger (DAP) - `:MonkeyC debug [device]` (needs [nvim-dap])
+- [x] Verify installation - `:checkhealth garmin-monkeyc`
 - [x] Open SDK Manager - `:MonkeyC sdk-manager`
-- [x] View documentation / open samples - `:MonkeyC docs` / `:MonkeyC samples`
+- [x] View docs / open samples - `:MonkeyC docs` / `:MonkeyC samples`
 - [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
 - [ ] Configure barrel
 - [ ] Native pairing / complication launch
@@ -35,20 +32,18 @@ Tracking parity with the [official VS Code extension][vscode].
 ## Requirements
 
 - Neovim 0.11+ (uses `vim.lsp.config` / `vim.lsp.enable`).
-- A Garmin [Connect IQ SDK][ciq] installed via the SDK Manager, with at least
-  one device downloaded.
+- A [Connect IQ SDK][ciq] installed via the SDK Manager, with at least one device
+  downloaded.
 - `java` on `PATH`.
+- [nvim-dap] for `:MonkeyC debug` (optional).
 
-The SDK location is detected per OS (matching where the Connect IQ SDK Manager
-installs):
+The SDK location is detected per OS. Override it with `sdk_path` if yours differs.
 
 | OS          | default `Sdks` directory                                  |
 | ----------- | --------------------------------------------------------- |
 | macOS       | `$HOME/Library/Application Support/Garmin/ConnectIQ/Sdks` |
 | Windows     | `$APPDATA/Garmin/ConnectIQ/Sdks`                          |
 | Linux/other | `$HOME/.Garmin/ConnectIQ/Sdks` (no official SDK Manager)  |
-
-Override it with the `sdk_path` option if your install differs.
 
 ## Installation
 
@@ -65,64 +60,36 @@ With [lazy.nvim]:
       type_check_level = "Default", -- Default | Off | Gradual | Informative | Strict
       optimization_level = "Default", -- Default | None | Basic | Fast | Slow
       function_completion = "snippet", -- "snippet" (cursor inside ()) | "strip"
-      sdk_path = nil, -- path to SDK installation, use if not in OS default path
+      sdk_path = nil, -- SDK path, set if not in the OS default
       device = nil, -- device id for type-checking (leave blank unless needed)
-      developer_key = "~/.garmin/developer_key.der", -- your developer key
+      developer_key = "~/.garmin/developer_key.der",
     })
   end,
 }
 ```
 
-The plugin registers `.mc` as filetype `monkeyc` itself (via `ftdetect/`,
-sourced at startup). Neovim's builtin runtime otherwise detects `.mc` as `m4`.
-
-### Cleaned hover
-
-`vim.lsp.buf.hover()` renders the server's HTML verbatim. Map the plugin's hover
-instead for cleaned Markdown:
-
-```lua
-vim.keymap.set("n", "K", require("garmin-monkeyc").hover)
-```
-
-It falls back to the builtin hover when no Monkey C client is attached, so it's
-safe to map globally.
-
-### Signature help
-
-`vim.lsp.buf.signature_help()` errors on this server (it sends no `context`).
-Map the plugin's instead:
-
-```lua
-vim.keymap.set({ "n", "i" }, "<C-k>", require("garmin-monkeyc").signature_help)
-```
-
-Also falls back to the builtin when no Monkey C client is attached.
+The plugin registers `.mc` as filetype `monkeyc` via `ftdetect/`. Without it,
+Neovim detects `.mc` as `m4`.
 
 ## Configuration
 
-| option                | default            | meaning                                                                                                           |
-| --------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                      |
-| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                                   |
-| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                              |
-| `optimization_level`  | `"Default"`        | compiler `-O` for builds/exports; one of `require("garmin-monkeyc").optimization_levels` (`"Default"` omits `-O`) |
-| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name`       |
-| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                           |
-| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                           |
-| `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds                                                            |
+| option                | default     | meaning                                                                                  |
+| --------------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| `capabilities`        | `nil`       | base LSP client capabilities, merged with the plugin's overrides                         |
+| `on_attach`           | `nil`       | called when the server attaches to a buffer                                              |
+| `type_check_level`    | `"Default"` | `Default`, `Off`, `Gradual`, `Informative`, `Strict`                                     |
+| `optimization_level`  | `"Default"` | compiler `-O` level: `Default`, `None`, `Basic`, `Fast`, `Slow` (`Default` omits `-O`)   |
+| `function_completion` | `"snippet"` | `"snippet"` puts the cursor inside `name()` (needs a snippet engine), `"strip"` uses `name` |
+| `sdk_path`            | per-OS      | the `Sdks` directory (see [Requirements](#requirements))                                  |
+| `device`              | `nil`       | device id for type-checking, leave unset unless you need it                              |
+| `developer_key`       | `nil`       | path to the `.der` key used to sign builds                                               |
 
----
-
-## Building and running
-
-Requires a **developer key** to pass to the compiler when building, set
-`developer_key`. No key yet? Run `:MonkeyC generate-key` (needs `openssl`).
+## Commands
 
 | command                              | action                                                         |
 | ------------------------------------ | -------------------------------------------------------------- |
 | `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt)   |
-| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                       |
+| `:MonkeyC build-for-device [device]` | build `bin/<project>.prg` for `device`                         |
 | `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it            |
 | `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator          |
 | `:MonkeyC debug [device]`            | build, start the simulator, and debug via DAP (needs nvim-dap) |
@@ -145,88 +112,94 @@ Requires a **developer key** to pass to the compiler when building, set
 | `:MonkeyC monkey-motion`             | launch Monkey Motion                                           |
 | `:MonkeyC era`                       | launch the ERA viewer                                          |
 
-Builds stream progress (e.g. `export` packages every product, so you get
-`exporting (42/234 devices)` on the command line). The full compiler output,
-including all warnings, is kept for `:MonkeyC logs`; on failure the errors also
-go to the quickfix list.
+A few things to know:
 
-`:MonkeyC build` uses the `device` option as the default device, falling back to
-the first product in `manifest.xml`.
+- `:MonkeyC build` uses the `device` option, falling back to the first product in
+  `manifest.xml`. Commands that take `[device]` prompt when it is omitted, using
+  `vim.ui.select`. Any ui-select frontend ([telescope-ui-select], [dressing.nvim],
+  [snacks.nvim]) turns that into a fuzzy picker, and device ids tab-complete on the
+  command line.
+- Builds stream progress on the command line. `export` packages every product, so
+  you get `exporting (42/234 devices)`. Full output is kept for `:MonkeyC logs`,
+  and errors go to the quickfix list.
+- `Strict` type checking maps to the compiler's `-l 3`, so a `Strict` build fails
+  on type errors.
+- Building needs a developer key. Set `developer_key`, or run `:MonkeyC generate-key`
+  (needs `openssl`) to create one.
 
-### Health check
+## Debugging (DAP)
 
-Run `:checkhealth garmin-monkeyc` to verify the setup. It reports the detected
-SDK, `LanguageServer.jar`, the `monkeyc`/`monkeydo`/`connectiq` tools, `java`, the
-installed device count, the developer key, and whether the language server is
-attached.
+`:MonkeyC debug [device]` starts a debug session with [nvim-dap]. The SDK ships a
+standard debug adapter (a Java DAP server in `monkeybrains.jar`), so the plugin
+just wires it up. It builds a non-release build, starts the simulator, waits for
+its debug port, and hands off to nvim-dap. Breakpoints, stepping, the call stack,
+variables, and expression evaluation all work through nvim-dap.
 
-If `[device]` is omitted you get a picker of the devices declared in
-`manifest.xml`, showing friendly names (e.g. `fēnix® 7 / quatix® 7`). The picker
-uses `vim.ui.select`, so with [telescope-ui-select] / [dressing.nvim] /
-[snacks.nvim] it becomes a fuzzy Telescope picker automatically. Device ids also
-tab-complete on the command line. Build errors (including type-check errors) go
-to the quickfix list.
+nvim-dap is optional. Everything else works without it, and the adapter registers
+only when nvim-dap is present. Debugging needs an SDK >= 2.3.0. Variables are
+read-only, since the adapter has no `setVariable`. See [DAP.md][dap-docs] for how
+the adapter works and what it supports.
 
-The type-check level for builds follows the `type_check_level` option (`Strict`
-maps to the compiler's `-l 3`, so a `Strict` build fails on type errors.
+## LSP
 
-### Debugging (DAP)
+The bundled `LanguageServer.jar` does not work with a stock LSP client, so the
+plugin:
 
-`:MonkeyC debug [device]` starts a debug session with [nvim-dap]. The Connect IQ
-SDK ships a standard debug adapter (a Java DAP server in `monkeybrains.jar`), so
-this plugin only wires it up: it builds a debuggable (non-release) build, starts
-the simulator, waits for its debug port, and hands off to nvim-dap. Breakpoints,
-stepping, the call stack, variables, and expression evaluation are then driven by
-nvim-dap's usual keymaps and UI.
-
-nvim-dap is an optional dependency: everything else works without it, and the
-adapter is only registered when nvim-dap is installed. `require("dap")` and the
-SDK (>= 2.3.0, which the adapter requires) must both be present. See
-[DAP.md][dap-docs] for how the adapter works under the hood.
-
----
-
-## LSP capabilities
-
-The bundled `LanguageServer.jar` doesn't work with a stock LSP client. To get it
-usable, the plugin:
-
-- Auto-discovers the newest installed SDK's `LanguageServer.jar`.
-- Works around the server's `initialize` NPE (it calls `.booleanValue()` on
+- Discovers the newest installed SDK's `LanguageServer.jar`.
+- Works around the server's `initialize` crash (it calls `.booleanValue()` on
   client capabilities it never null-checks).
-- Builds the per-project `workspaceSettings` the server needs before it resolves
-  anything (project path, jungle files, type check level, device).
-- Cleans the server's VS Code-flavored HTML hover into plain Markdown.
-- Rewrites `name()` function completions into `name($0)` snippets so confirming
-  drops the cursor between the parens (matching the VS Code extension).
+- Builds the `workspaceSettings` the server needs before it resolves anything
+  (project path, jungle files, type check level, device).
+- Cleans the server's HTML hover into Markdown.
+- Rewrites `name()` completions into `name($0)` snippets so the cursor lands
+  between the parens.
 
-With that in place, this is what the server implements (from its `initialize`
-capabilities and the jar's service methods) and how it behaves in Neovim:
+Two features need a mapping because the server is non-standard. Both fall back to
+the builtin when no Monkey C client is attached, so they are safe to map globally:
 
-| Feature                                                                     | Status    | Notes                                                                                                             |
-| --------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
-| definition / declaration / typeDefinition / implementation                  | ✅ native | `Ctrl-]` or your goto-definition binding                                                                          |
-| references                                                                  | ✅ native | `grr`                                                                                                             |
-| documentHighlight                                                           | ✅ native |                                                                                                                   |
-| documentSymbol / workspaceSymbol                                            | ✅ native | `gO`, `:lua vim.lsp.buf.workspace_symbol()`                                                                       |
-| foldingRange                                                                | ✅ native |                                                                                                                   |
-| callHierarchy (incoming/outgoing)                                           | ✅ native |                                                                                                                   |
-| typeHierarchy (super/sub)                                                   | ✅ native |                                                                                                                   |
-| hover                                                                       | ⚙️ plugin | server returns VS Code HTML; use `require("garmin-monkeyc").hover()`                                              |
-| signatureHelp                                                               | ⚙️ plugin | NPEs without a `context`; use `require("garmin-monkeyc").signature_help()`. Only shows **inside** a call's parens |
-| completion                                                                  | ⚙️ plugin | no `resolveProvider`, no item docs; parens rewritten                                                              |
-| rename                                                                      | ⚙️ plugin | `prepareRename` NPEs; the plugin drops `prepareProvider` so `grn` renames directly                                |
-| codeAction, formatting, semanticTokens, inlayHint, codeLens, executeCommand | ❌ absent | the server doesn't implement these                                                                                |
+```lua
+-- HTML hover cleaned to Markdown
+vim.keymap.set("n", "K", require("garmin-monkeyc").hover)
+-- signature help (the server errors without a context)
+vim.keymap.set({ "n", "i" }, "<C-k>", require("garmin-monkeyc").signature_help)
+```
 
-"native" features need nothing from this plugin beyond the client being
-attached, your normal LSP keymaps just work.
+Capabilities:
+
+| Feature                                                                     | Support |
+| --------------------------------------------------------------------------- | :-----: |
+| definition, declaration, typeDefinition, implementation                     |   ✅    |
+| references                                                                  |   ✅    |
+| documentHighlight                                                           |   ✅    |
+| documentSymbol, workspaceSymbol                                             |   ✅    |
+| foldingRange                                                                |   ✅    |
+| callHierarchy                                                               |   ✅    |
+| typeHierarchy                                                               |   ✅    |
+| hover                                                                       |   ⚙️    |
+| signatureHelp                                                               |   ⚙️    |
+| completion                                                                  |   ⚙️    |
+| rename                                                                      |   ⚙️    |
+| codeAction, formatting, semanticTokens, inlayHint, codeLens, executeCommand |   ❌    |
+
+- ✅ works with a stock client
+- ⚙️ needs a plugin workaround (see above)
+- ❌ not implemented by the server
+
+For the LSP internals, see [LSP.md][lsp-docs].
+
+## Health check
+
+`:checkhealth garmin-monkeyc` reports the SDK and version, the toolchain
+(`LanguageServer.jar`, `monkeyc`, `monkeydo`, `connectiq`), `java`, the installed
+device count, the developer key, the DAP adapter, and whether the language server
+is attached.
 
 [ciq]: https://developer.garmin.com/connect-iq/overview/
 [dap-docs]: ./DAP.md
 [dressing.nvim]: https://github.com/stevearc/dressing.nvim
 [lazy.nvim]: https://github.com/folke/lazy.nvim
+[lsp-docs]: ./LSP.md
 [nvim-dap]: https://github.com/mfussenegger/nvim-dap
-[lsp-docs]: ./LSP_DOCS.md
 [snacks.nvim]: https://github.com/folke/snacks.nvim
 [telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim
 [vscode]: https://marketplace.visualstudio.com/items?itemName=garmin.monkey-c
