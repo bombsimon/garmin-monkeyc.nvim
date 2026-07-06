@@ -18,7 +18,7 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] Build current project - `:MonkeyC build`
 - [x] Clean project - `:MonkeyC clean`
 - [x] Run unit tests - `:MonkeyC test [device]`
-- [ ] Export project (`.iq` for the Connect IQ Store)
+- [x] Export project (`.iq` for the Connect IQ Store) - `:MonkeyC export [path]`
 - [ ] New project
 - [ ] Generate a developer key
 - [x] Verify installation - `:checkhealth garmin-monkeyc`
@@ -134,6 +134,7 @@ Then:
 | `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                     |
 | `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it          |
 | `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator        |
+| `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)        |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 
 `:MonkeyC build` uses the `device` option as the default device, falling back to

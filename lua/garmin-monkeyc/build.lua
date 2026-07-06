@@ -36,11 +36,15 @@ local function output_prg(directory, device, unit_test)
   return vim.fs.joinpath(directory, "bin", file)
 end
 
--- Compile the project for device. opts:
+-- Compile the project. opts:
+--   device     - target device (-d); omit to package all products (export)
 --   unit_test  - build with -t (unit tests) to a separate prg
---   on_success - called with the built prg path
+--   package    - build a distributable application package (-e -r, .iq)
+--   output     - override the output path
+--   label      - progress message ("building for X" by default)
+--   on_success - called with the output path
 -- Errors go to the quickfix list.
-local function compile(device, opts)
+local function compile(opts)
   opts = opts or {}
 
   local options = config.options
@@ -56,25 +60,31 @@ local function compile(device, opts)
   end
 
   local directory = project_directory()
-  local prg = output_prg(directory, device, opts.unit_test)
+  local output = opts.output or output_prg(directory, opts.device, opts.unit_test)
 
-  vim.fn.mkdir(vim.fs.dirname(prg), "p")
+  vim.fn.mkdir(vim.fs.dirname(output), "p")
 
   local args = {
     monkeyc,
     "-f",
     table.concat(sdk.jungle_files(directory), ";"),
     "-o",
-    prg,
-    "-d",
-    device,
+    output,
     "-y",
     options.developer_key,
     "-w",
   }
 
+  if opts.device then
+    vim.list_extend(args, { "-d", opts.device })
+  end
+
   if opts.unit_test then
     table.insert(args, "-t")
+  end
+
+  if opts.package then
+    vim.list_extend(args, { "-e", "-r" })
   end
 
   local flag = typecheck_flag[options.type_check_level]
@@ -82,15 +92,15 @@ local function compile(device, opts)
     vim.list_extend(args, { "-l", flag })
   end
 
-  notify(("%s %s…"):format(opts.unit_test and "building tests for" or "building for", device))
+  notify((opts.label or ("building for " .. opts.device)) .. "…")
 
   vim.system(args, { text = true, cwd = directory }, function(result)
     vim.schedule(function()
       if result.code == 0 then
-        notify(("built %s"):format(prg))
+        notify(("built %s"):format(output))
 
         if opts.on_success then
-          opts.on_success(prg)
+          opts.on_success(output)
         end
       else
         notify("build failed", vim.log.levels.ERROR)
@@ -168,18 +178,19 @@ end
 
 function M.build_for_device(device)
   if device and device ~= "" then
-    return compile(device)
+    return compile({ device = device })
   end
 
   M.pick_device(function(chosen)
-    compile(chosen)
+    compile({ device = chosen })
   end)
 end
 
 -- Build and run in the simulator.
 function M.run(device)
   local function build_and_run(chosen)
-    compile(chosen, {
+    compile({
+      device = chosen,
       on_success = function(prg)
         run_in_simulator(chosen, prg)
       end,
@@ -197,7 +208,8 @@ end
 -- monkeydo -t).
 function M.test(device)
   local function build_and_test(chosen)
-    compile(chosen, {
+    compile({
+      device = chosen,
       unit_test = true,
       on_success = function(prg)
         run_in_simulator(chosen, prg, { unit_test = true })
@@ -212,6 +224,30 @@ function M.test(device)
   M.pick_device(build_and_test)
 end
 
+-- Build a distributable application package (.iq) for the Connect IQ Store:
+-- all products, release build. {output} may be a file or directory; defaults to
+-- bin/<project>.iq.
+function M.export(output)
+  local directory = project_directory()
+  local name = vim.fs.basename(directory)
+
+  if output and output ~= "" then
+    output = vim.fn.expand(output)
+
+    if vim.fn.isdirectory(output) == 1 then
+      output = vim.fs.joinpath(output, name .. ".iq")
+    end
+  else
+    output = vim.fs.joinpath(directory, "bin", name .. ".iq")
+  end
+
+  compile({
+    package = true,
+    output = output,
+    label = "exporting " .. vim.fs.basename(output),
+  })
+end
+
 -- Build the current project without prompting, using a default device: the
 -- `device` option if set, else the first product in the manifest.
 function M.build()
@@ -221,7 +257,7 @@ function M.build()
     return notify("no default device; set the `device` option or add products to manifest.xml", vim.log.levels.ERROR)
   end
 
-  compile(device)
+  compile({ device = device })
 end
 
 -- Remove the build output directory (bin/), like VS Code's "Clean Project".
@@ -241,6 +277,7 @@ local subcommands = {
   ["build-for-device"] = M.build_for_device,
   ["run"] = M.run,
   ["test"] = M.test,
+  ["export"] = M.export,
   ["clean"] = M.clean,
 }
 
@@ -281,6 +318,11 @@ function M.setup()
         return vim.tbl_filter(function(id)
           return id:find(arglead, 1, true) == 1
         end, sdk.manifest_devices(project_directory()))
+      end
+
+      -- export takes an output path.
+      if subcommand == "export" then
+        return vim.fn.getcompletion(arglead, "file")
       end
 
       return {}

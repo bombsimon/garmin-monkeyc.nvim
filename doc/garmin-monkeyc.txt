@@ -114,6 +114,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                     *MonkeyC-build-for-device*
                                                                  *MonkeyC-run*
                                                                 *MonkeyC-test*
+                                                              *MonkeyC-export*
                                                                *MonkeyC-clean*
 
     build                 Build the current project for the default device
@@ -127,6 +128,10 @@ Subcommands:                                                   *MonkeyC-build*
 
     test [{device}]       Build the unit tests (`-t`) and run them in the
                           simulator.
+
+    export [{path}]       Package a distributable `.iq` for the Connect IQ
+                          Store (all products, release build). {path} may be a
+                          file or directory; defaults to `bin/<project>.iq`.
 
     clean                 Remove the `bin/` build output directory.
 
@@ -152,6 +157,7 @@ require("garmin-monkeyc").build([{device}])        *garmin-monkeyc.build()*
 require("garmin-monkeyc").build_for_device([{device}])
 require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
 require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
+require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
         The functions behind the |:MonkeyC| subcommands, exposed for mappings.
 

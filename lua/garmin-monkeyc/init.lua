@@ -48,6 +48,10 @@ function M.test(device)
   return require("garmin-monkeyc.build").test(device)
 end
 
+function M.export(output)
+  return require("garmin-monkeyc.build").export(output)
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end
