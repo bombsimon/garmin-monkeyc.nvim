@@ -116,6 +116,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                               *MonkeyC-export*
                                                         *MonkeyC-generate-key*
                                                          *MonkeyC-new-project*
+                                                     *MonkeyC-regenerate-uuid*
                                                                *MonkeyC-clean*
                                                                 *MonkeyC-logs*
                                                               *MonkeyC-cancel*
@@ -148,6 +149,9 @@ Subcommands:                                                   *MonkeyC-build*
                           name, entry, minApiLevel) and source class names.
                           {dir} defaults to <cwd>/<name>. Add products to the
                           manifest before building.
+
+    regenerate-uuid       Replace the manifest's application id with a fresh
+                          UUID (product ids are left untouched).
 
     clean                 Remove the `bin/` build output directory.
 
@@ -183,6 +187,7 @@ require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").new_project([{dir}])     *garmin-monkeyc.new_project()*
+require("garmin-monkeyc").regenerate_uuid()        *garmin-monkeyc.regenerate_uuid()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
 require("garmin-monkeyc").logs()                   *garmin-monkeyc.logs()*
 require("garmin-monkeyc").cancel()                 *garmin-monkeyc.cancel()*

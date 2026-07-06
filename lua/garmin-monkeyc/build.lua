@@ -418,7 +418,7 @@ local function replace_all(text, find, repl)
   return (text:gsub(pattern, (repl:gsub("%%", "%%%%"))))
 end
 
--- RSA-free v4 UUID (for the manifest application id).
+-- Random v4 UUID (for the manifest application id).
 local function uuid()
   math.randomseed(vim.uv.hrtime())
 
@@ -522,6 +522,29 @@ function M.new_project(dir)
   end)
 end
 
+-- Replace the manifest's application id with a fresh UUID (leaves product ids
+-- untouched). Use after copying a project so it gets its own identity.
+function M.regenerate_uuid()
+  local manifest = vim.fs.joinpath(project_directory(), "manifest.xml")
+
+  if not vim.uv.fs_stat(manifest) then
+    return notify("no manifest.xml found", vim.log.levels.ERROR)
+  end
+
+  local id = uuid()
+  local content, replaced =
+    table.concat(vim.fn.readfile(manifest), "\n"):gsub('(<iq:application[^>]-)id="[^"]*"', '%1id="' .. id .. '"', 1)
+
+  if replaced == 0 then
+    return notify("no <iq:application id> found in manifest.xml", vim.log.levels.ERROR)
+  end
+
+  vim.fn.writefile(vim.split(content, "\n"), manifest)
+  vim.cmd("checktime") -- reload the manifest buffer if it is open
+
+  notify("regenerated application id: " .. id)
+end
+
 -- Stop the running build.
 function M.cancel()
   if not current_build then
@@ -561,6 +584,7 @@ local subcommands = {
   ["export"] = M.export,
   ["generate-key"] = M.generate_key,
   ["new-project"] = M.new_project,
+  ["regenerate-uuid"] = M.regenerate_uuid,
   ["clean"] = M.clean,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,

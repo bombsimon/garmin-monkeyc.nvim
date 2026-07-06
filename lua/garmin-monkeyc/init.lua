@@ -68,6 +68,10 @@ function M.new_project(dir)
   return require("garmin-monkeyc.build").new_project(dir)
 end
 
+function M.regenerate_uuid()
+  return require("garmin-monkeyc.build").regenerate_uuid()
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end
