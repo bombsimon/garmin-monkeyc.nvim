@@ -70,7 +70,7 @@ local function build_workspace_settings(root, type_check_level, device)
       jungleFiles = sdk.jungle_files(directory),
       -- options is positional: { typeCheckLevel, debugLogLevel, targetDevice }.
       -- Like the VS Code extension, send no device by default (vim.NIL = JSON
-      -- null) — the server still resolves against a default. Set opts.device to
+      -- null), the server still resolves against a default. Set opts.device to
       -- pin a specific device (e.g. for device-accurate Strict diagnostics).
       options = { type_check_level, "Default", device or vim.NIL },
     },

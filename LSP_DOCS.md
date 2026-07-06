@@ -40,7 +40,7 @@ build the workspace from `initializationOptions.workspaceSettings`:
   `Intermediate`, `Verbose`.
 - **`options[2]` (target device)** is optional (JSON `null`). The server
   resolves against a default when it's absent, so the plugin sends no device by
-  default — matching the VS Code extension, which only sets a device
+  default - matching the VS Code extension, which only sets a device
   (`lastBuildDevice`) after you run a build/run. Set the `device` option to pin
   an **installed** device id for device-accurate diagnostics.
 
@@ -107,10 +107,10 @@ Key `window/logMessage` lines and what they mean:
 
 | Log message                                          | Meaning / fix                                                      |
 | ---------------------------------------------------- | ------------------------------------------------------------------ |
-| `Invalid type check level '' specified for root ...` | `options[0]` empty/invalid — use a valid `type_check_level`.       |
+| `Invalid type check level '' specified for root ...` | `options[0]` empty/invalid, use a valid `type_check_level`.        |
 | `Unable to initialize workspace for root folder ...` | Follows the above; the workspace never built, so nothing resolves. |
 | `Unable to determine workspace for file ...`         | The open file's path isn't inside any `workspaceSettings.path`.    |
-| `Found workspace with root folder ... for file ...`  | Good — the file is mapped to a workspace and will be analyzed.     |
+| `Found workspace with root folder ... for file ...`  | Good, the file is mapped to a workspace and will be analyzed.      |
 | `Building full workspace for root folder ...`        | Analysis started; wait for it to finish before expecting results.  |
 | `NullPointerException ... getDynamicRegistration()`  | A probed capability is missing (see quirk 1).                      |
 

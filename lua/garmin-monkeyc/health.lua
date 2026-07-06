@@ -1,4 +1,4 @@
--- `:checkhealth garmin-monkeyc` — the equivalent of the VS Code extension's
+-- `:checkhealth garmin-monkeyc`, the equivalent of the VS Code extension's
 -- "Verify Installation": reports the SDK, toolchain, java, developer key, and
 -- live language-server status.
 
@@ -87,7 +87,7 @@ function M.check()
   -- Developer key is only needed for building.
   local key = config.options.developer_key
   if not key then
-    health.warn("developer_key not set — :MonkeyC build/run is disabled", {
+    health.warn("developer_key not set, :MonkeyC build/run is disabled", {
       "Set the `developer_key` option to a .der to enable building",
     })
   elseif vim.uv.fs_stat(key) then

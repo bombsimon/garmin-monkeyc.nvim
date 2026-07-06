@@ -10,7 +10,7 @@ For more details around LSP documentation, see [LSP_DOCS.md][lsp-docs].
 
 Tracking parity with the [official VS Code extension][vscode].
 
-- [x] Language server — hover, completion, goto-definition, references, rename,
+- [x] Language server - hover, completion, goto-definition, references, rename,
       document/workspace symbols, folding, call/type hierarchy (see
       [LSP capabilities](#lsp-capabilities))
 - [x] Build for device - `:MonkeyC build-for-device [device]`
@@ -148,10 +148,10 @@ attached.
 
 If `[device]` is omitted you get a picker of the devices declared in
 `manifest.xml`, showing friendly names (e.g. `fēnix® 7 / quatix® 7`). The picker
-uses `vim.ui.select`, so with [telescope-ui-select] (or `dressing.nvim`) it
-becomes a fuzzy Telescope picker automatically. Device ids also tab-complete on
-the command line. Build errors (including type-check errors) go to the quickfix
-list.
+uses `vim.ui.select`, so with [telescope-ui-select] / [dressing.nvim] /
+[snacks.nvim] it becomes a fuzzy Telescope picker automatically. Device ids also
+tab-complete on the command line. Build errors (including type-check errors) go
+to the quickfix list.
 
 The type-check level for builds follows the `type_check_level` option (`Strict`
 maps to the compiler's `-l 3`, so a `Strict` build fails on type errors.
@@ -194,7 +194,9 @@ capabilities and the jar's service methods) and how it behaves in Neovim:
 attached, your normal LSP keymaps just work.
 
 [ciq]: https://developer.garmin.com/connect-iq/overview/
+[dressing.nvim]: https://github.com/stevearc/dressing.nvim
 [lazy.nvim]: https://github.com/folke/lazy.nvim
 [lsp-docs]: ./LSP_DOCS.md
+[snacks.nvim]: https://github.com/folke/snacks.nvim
 [telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim
 [vscode]: https://marketplace.visualstudio.com/items?itemName=garmin.monkey-c
