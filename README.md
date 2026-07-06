@@ -22,7 +22,7 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] New project - `:MonkeyC new-project [dir]`
 - [x] Generate a developer key - `:MonkeyC generate-key [path]`
 - [x] Verify installation - `:checkhealth garmin-monkeyc`
-- [ ] Edit manifest (products, permissions, languages, application, annotations)
+- [x] Edit manifest - `:MonkeyC edit-products` / `edit-permissions` / `edit-languages` / `edit-annotations` / `edit-application`
 - [x] Regenerate UUID - `:MonkeyC regenerate-uuid`
 - [ ] Debugger (DAP)
 - [x] Open SDK Manager - `:MonkeyC sdk-manager`
@@ -126,6 +126,11 @@ Requires a **developer key** to pass to the compiler when building, set
 | `:MonkeyC generate-key [path]`       | generate a developer key (RSA 4096, PKCS8 DER) via openssl   |
 | `:MonkeyC new-project [dir]`         | scaffold a new project from an SDK template (prompts)        |
 | `:MonkeyC regenerate-uuid`           | give the manifest a fresh application id                     |
+| `:MonkeyC edit-products`             | choose the manifest's target devices (checkbox buffer)       |
+| `:MonkeyC edit-permissions`          | edit the manifest's permissions                              |
+| `:MonkeyC edit-languages`            | edit the manifest's languages                                |
+| `:MonkeyC edit-annotations`          | edit the manifest's annotations                              |
+| `:MonkeyC edit-application`          | edit application type and minimum API level                  |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 | `:MonkeyC logs`                      | open the last build's full output in a split                 |
 | `:MonkeyC cancel`                    | stop the running build                                       |

@@ -69,6 +69,22 @@ function M.template_dir(sdk_path, app_type)
   return vim.fn.glob(vim.fs.joinpath(base, "bin", "templates", app_type, "*"), false, true)[1]
 end
 
+-- Ids of all installed devices (folders under Devices/ with a compiler.json),
+-- sorted.
+function M.installed_devices(sdk_path)
+  local ids = {}
+
+  for _, compiler_json in
+    ipairs(vim.fn.glob(vim.fs.joinpath(M.devices_path(sdk_path), "*", "compiler.json"), false, true))
+  do
+    ids[#ids + 1] = vim.fs.basename(vim.fs.dirname(compiler_json))
+  end
+
+  table.sort(ids)
+
+  return ids
+end
+
 -- Friendly device name from the installed device's compiler.json displayName
 -- (e.g. "fēnix® 7 / quatix® 7"), or nil if the device isn't installed.
 function M.friendly_name(sdk_path, device_id)

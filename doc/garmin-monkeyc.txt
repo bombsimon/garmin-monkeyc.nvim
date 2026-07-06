@@ -117,6 +117,11 @@ Subcommands:                                                   *MonkeyC-build*
                                                         *MonkeyC-generate-key*
                                                          *MonkeyC-new-project*
                                                      *MonkeyC-regenerate-uuid*
+                                                       *MonkeyC-edit-products*
+                                                    *MonkeyC-edit-permissions*
+                                                      *MonkeyC-edit-languages*
+                                                    *MonkeyC-edit-annotations*
+                                                    *MonkeyC-edit-application*
                                                                *MonkeyC-clean*
                                                                 *MonkeyC-logs*
                                                               *MonkeyC-cancel*
@@ -158,6 +163,23 @@ Subcommands:                                                   *MonkeyC-build*
 
     regenerate-uuid       Replace the manifest's application id with a fresh
                           UUID (product ids are left untouched).
+
+    edit-products         Choose the manifest's target devices from the
+                          installed devices (current products pre-selected) in
+                          a checkbox buffer: Tab/Space toggle, :w save, q
+                          cancel.
+
+    edit-permissions      Choose the manifest's permissions from the known set
+                          in a checkbox buffer (Tab/Space toggle, :w save, q
+                          cancel). Permissions that require the Background
+                          permission select it automatically; deselecting
+                          Background deselects them.
+
+    edit-languages        Edit the manifest's <iq:languages> language codes or
+    edit-annotations      <iq:annotations>, one entry per line (:w save, q
+                          cancel).
+
+    edit-application      Edit the application type and minimum API level.
 
     clean                 Remove the `bin/` build output directory.
 
@@ -208,6 +230,11 @@ require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").new_project([{dir}])     *garmin-monkeyc.new_project()*
 require("garmin-monkeyc").regenerate_uuid()        *garmin-monkeyc.regenerate_uuid()*
+require("garmin-monkeyc").edit_products()          *garmin-monkeyc.edit_products()*
+require("garmin-monkeyc").edit_permissions()       *garmin-monkeyc.edit_permissions()*
+require("garmin-monkeyc").edit_languages()         *garmin-monkeyc.edit_languages()*
+require("garmin-monkeyc").edit_annotations()       *garmin-monkeyc.edit_annotations()*
+require("garmin-monkeyc").edit_application()        *garmin-monkeyc.edit_application()*
 require("garmin-monkeyc").docs()                   *garmin-monkeyc.docs()*
 require("garmin-monkeyc").samples()                *garmin-monkeyc.samples()*
 require("garmin-monkeyc").sdk_manager()            *garmin-monkeyc.sdk_manager()*

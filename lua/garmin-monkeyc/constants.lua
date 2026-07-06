@@ -6,4 +6,30 @@
 -- matches the Neovim filetype and the VS Code extension's client id.
 return {
   server_name = "monkeyc-lsp",
+
+  -- The permissions a manifest can declare. Not discoverable from the SDK, so
+  -- they are enumerated here (matching the VS Code extension's picklist).
+  permissions = {
+    "Ant",
+    "Background",
+    "BluetoothLowEnergy",
+    "Communications",
+    "ComplicationSubscriber",
+    "Notifications",
+    "Positioning",
+    "PushNotification",
+    "Sensor",
+    "SensorHistory",
+    "UserProfile",
+  },
+
+  -- Permissions that require "Background" to also be granted. Selecting any of
+  -- them auto-selects Background; deselecting Background deselects all of them.
+  permissions_requiring_background = {
+    "Ant",
+    "BluetoothLowEnergy",
+    "Communications",
+    "PushNotification",
+    "Sensor",
+  },
 }

@@ -5,6 +5,7 @@
 local config = require("garmin-monkeyc.config")
 local sdk = require("garmin-monkeyc.sdk")
 local tools = require("garmin-monkeyc.tools")
+local manifest = require("garmin-monkeyc.manifest")
 
 local M = {}
 
@@ -586,6 +587,11 @@ local subcommands = {
   ["generate-key"] = M.generate_key,
   ["new-project"] = M.new_project,
   ["regenerate-uuid"] = M.regenerate_uuid,
+  ["edit-products"] = manifest.edit_products,
+  ["edit-permissions"] = manifest.edit_permissions,
+  ["edit-languages"] = manifest.edit_languages,
+  ["edit-annotations"] = manifest.edit_annotations,
+  ["edit-application"] = manifest.edit_application,
   ["clean"] = M.clean,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,
