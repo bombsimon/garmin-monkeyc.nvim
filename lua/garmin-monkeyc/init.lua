@@ -21,6 +21,10 @@ function M.setup(opts)
 
   require("garmin-monkeyc.lsp").setup(options)
   require("garmin-monkeyc.build").setup()
+
+  -- Registers the DAP adapter when nvim-dap and the SDK jars are present;
+  -- a no-op otherwise, so the plugin works without nvim-dap installed.
+  require("garmin-monkeyc.dap").setup()
 end
 
 function M.hover()
@@ -47,6 +51,10 @@ end
 
 function M.test(device)
   return require("garmin-monkeyc.build").test(device)
+end
+
+function M.debug(device)
+  return require("garmin-monkeyc.dap").debug(device)
 end
 
 function M.export(output)

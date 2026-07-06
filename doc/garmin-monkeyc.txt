@@ -9,7 +9,8 @@ CONTENTS                                             *garmin-monkeyc-contents*
     4. Configuration ................. |garmin-monkeyc-configuration|
     5. Commands ...................... |garmin-monkeyc-commands|
     6. Lua API ....................... |garmin-monkeyc-api|
-    7. Health check .................. |garmin-monkeyc-health|
+    7. Debugging (DAP) ............... |garmin-monkeyc-dap|
+    8. Health check .................. |garmin-monkeyc-health|
 
 ==============================================================================
 1. Introduction                *garmin-monkeyc* *garmin-monkeyc-introduction*
@@ -120,6 +121,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                     *MonkeyC-build-for-device*
                                                                  *MonkeyC-run*
                                                                 *MonkeyC-test*
+                                                               *MonkeyC-debug*
                                                               *MonkeyC-export*
                                                         *MonkeyC-generate-key*
                                                          *MonkeyC-new-project*
@@ -150,6 +152,13 @@ Subcommands:                                                   *MonkeyC-build*
 
     test [{device}]       Build the unit tests (`-t`) and run them in the
                           simulator.
+
+    debug [{device}]      Build a debuggable (non-release) build, start the
+                          simulator, wait for its debug port, and start a DAP
+                          session. Requires the nvim-dap plugin and an SDK that
+                          supports debugging (>= 2.3.0). Breakpoints, stepping,
+                          the call stack, variables, and evaluation are handled
+                          by nvim-dap. See |garmin-monkeyc-dap|.
 
     export [{path}]       Package a distributable `.iq` for the Connect IQ
                           Store (all products, release build). {path} may be a
@@ -233,6 +242,7 @@ require("garmin-monkeyc").build([{device}])        *garmin-monkeyc.build()*
 require("garmin-monkeyc").build_for_device([{device}])
 require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
 require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
+require("garmin-monkeyc").debug([{device}])        *garmin-monkeyc.debug()*
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").new_project([{dir}])     *garmin-monkeyc.new_project()*
@@ -260,7 +270,29 @@ require("garmin-monkeyc").optimization_levels      *garmin-monkeyc.optimization_
         List of valid |garmin-monkeyc-config-optimization_level| values.
 
 ==============================================================================
-7. Health check                                    *garmin-monkeyc-health*
+7. Debugging (DAP)                                    *garmin-monkeyc-dap*
+
+|:MonkeyC| debug starts a source-level debug session through the nvim-dap
+plugin (https://github.com/mfussenegger/nvim-dap), an optional dependency.
+
+The Connect IQ SDK ships a standard debug adapter: a Java DAP server
+(`com.garmin.monkeybrains.monkeydodo.DebugAdapterProtocol`) inside
+`monkeybrains.jar`. |garmin-monkeyc.setup()| registers it as the `monkeyc`
+nvim-dap adapter when nvim-dap and the SDK jars are present; when nvim-dap is
+absent this is a no-op and the rest of the plugin is unaffected.
+
+`:MonkeyC debug [{device}]` then:
+    1. builds a debuggable (non-release) build, emitting `<prg>.debug.xml`;
+    2. starts the simulator and waits for its debug port (127.0.0.1:40000);
+    3. launches an nvim-dap session against the adapter.
+
+Breakpoints, stepping, the call stack, variables, and expression evaluation
+are provided by nvim-dap; use its usual keymaps and UI. Debugging requires an
+SDK that supports it (>= 2.3.0). Release/export builds (`-r`) are not
+debuggable. See DAP.md in the plugin repository for the details.
+
+==============================================================================
+8. Health check                                    *garmin-monkeyc-health*
 
 >vim
     :checkhealth garmin-monkeyc

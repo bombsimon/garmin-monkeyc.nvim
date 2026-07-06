@@ -283,6 +283,12 @@ function M.build_for_device(device)
   end)
 end
 
+-- Build a debuggable (non-release) prg for the device and call on_success(prg).
+-- The compiler emits <prg>.debug.xml alongside it. Exposed for the DAP module.
+function M.build_debug(device, on_success)
+  compile({ device = device, label = "building for debug on " .. device, on_success = on_success })
+end
+
 -- Build and run in the simulator.
 function M.run(device)
   local function build_and_run(chosen)
@@ -598,6 +604,9 @@ local subcommands = {
   ["build-for-device"] = M.build_for_device,
   ["run"] = M.run,
   ["test"] = M.test,
+  ["debug"] = function(device)
+    require("garmin-monkeyc.dap").debug(device)
+  end,
   ["export"] = M.export,
   ["generate-key"] = M.generate_key,
   ["new-project"] = M.new_project,
@@ -623,6 +632,7 @@ local device_subcommands = {
   ["build-for-device"] = true,
   ["run"] = true,
   ["test"] = true,
+  ["debug"] = true,
 }
 
 -- Subcommands whose argument is a filesystem path.

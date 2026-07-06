@@ -22,9 +22,10 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] New project - `:MonkeyC new-project [dir]`
 - [x] Generate a developer key - `:MonkeyC generate-key [path]`
 - [x] Verify installation - `:checkhealth garmin-monkeyc`
-- [x] Edit manifest - `:MonkeyC edit-products` / `edit-permissions` / `edit-languages` / `edit-annotations` / `edit-application`
+- [x] Edit manifest - `:MonkeyC edit-products` / `edit-permissions` /
+      `edit-languages` / `edit-annotations` / `edit-application`
 - [x] Regenerate UUID - `:MonkeyC regenerate-uuid`
-- [ ] Debugger (DAP)
+- [x] Debugger (DAP) - `:MonkeyC debug [device]` (needs [nvim-dap])
 - [x] Open SDK Manager - `:MonkeyC sdk-manager`
 - [x] View documentation / open samples - `:MonkeyC docs` / `:MonkeyC samples`
 - [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
@@ -100,16 +101,16 @@ Also falls back to the builtin when no Monkey C client is attached.
 
 ## Configuration
 
-| option                | default            | meaning                                                                                                     |
-| --------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                |
-| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                             |
-| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                        |
+| option                | default            | meaning                                                                                                           |
+| --------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                      |
+| `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                                   |
+| `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                              |
 | `optimization_level`  | `"Default"`        | compiler `-O` for builds/exports; one of `require("garmin-monkeyc").optimization_levels` (`"Default"` omits `-O`) |
-| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name` |
-| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                     |
-| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                     |
-| `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds                                                      |
+| `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name`       |
+| `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                           |
+| `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                           |
+| `developer_key`       | `nil`              | path to the developer key (`.der`) used to sign builds                                                            |
 
 ---
 
@@ -118,30 +119,31 @@ Also falls back to the builtin when no Monkey C client is attached.
 Requires a **developer key** to pass to the compiler when building, set
 `developer_key`. No key yet? Run `:MonkeyC generate-key` (needs `openssl`).
 
-| command                              | action                                                       |
-| ------------------------------------ | ------------------------------------------------------------ |
-| `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt) |
-| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                     |
-| `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it          |
-| `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator        |
-| `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)        |
-| `:MonkeyC generate-key [path]`       | generate a developer key (RSA 4096, PKCS8 DER) via openssl   |
-| `:MonkeyC new-project [dir]`         | scaffold a new project from an SDK template (prompts)        |
-| `:MonkeyC regenerate-uuid`           | give the manifest a fresh application id                     |
-| `:MonkeyC edit-products`             | choose the manifest's target devices (checkbox buffer)       |
-| `:MonkeyC edit-permissions`          | edit the manifest's permissions                              |
-| `:MonkeyC edit-languages`            | edit the manifest's languages                                |
-| `:MonkeyC edit-annotations`          | edit the manifest's annotations                              |
-| `:MonkeyC edit-application`          | edit application type and minimum API level                  |
-| `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
-| `:MonkeyC logs`                      | open the last build's full output in a split                 |
-| `:MonkeyC cancel`                    | stop the running build                                       |
-| `:MonkeyC sdk-manager`               | open the Connect IQ SDK Manager                              |
-| `:MonkeyC docs`                      | pick a bundled SDK doc (API reference, guides) to open       |
-| `:MonkeyC samples`                   | open the SDK's samples directory                             |
-| `:MonkeyC monkey-graph`              | launch Monkey Graph (FIT graphing)                           |
-| `:MonkeyC monkey-motion`             | launch Monkey Motion                                         |
-| `:MonkeyC era`                       | launch the ERA viewer                                        |
+| command                              | action                                                         |
+| ------------------------------------ | -------------------------------------------------------------- |
+| `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt)   |
+| `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                       |
+| `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it            |
+| `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator          |
+| `:MonkeyC debug [device]`            | build, start the simulator, and debug via DAP (needs nvim-dap) |
+| `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)          |
+| `:MonkeyC generate-key [path]`       | generate a developer key (RSA 4096, PKCS8 DER) via openssl     |
+| `:MonkeyC new-project [dir]`         | scaffold a new project from an SDK template (prompts)          |
+| `:MonkeyC regenerate-uuid`           | give the manifest a fresh application id                       |
+| `:MonkeyC edit-products`             | choose the manifest's target devices (checkbox buffer)         |
+| `:MonkeyC edit-permissions`          | edit the manifest's permissions                                |
+| `:MonkeyC edit-languages`            | edit the manifest's languages                                  |
+| `:MonkeyC edit-annotations`          | edit the manifest's annotations                                |
+| `:MonkeyC edit-application`          | edit application type and minimum API level                    |
+| `:MonkeyC clean`                     | remove the `bin/` build output directory                       |
+| `:MonkeyC logs`                      | open the last build's full output in a split                   |
+| `:MonkeyC cancel`                    | stop the running build                                         |
+| `:MonkeyC sdk-manager`               | open the Connect IQ SDK Manager                                |
+| `:MonkeyC docs`                      | pick a bundled SDK doc (API reference, guides) to open         |
+| `:MonkeyC samples`                   | open the SDK's samples directory                               |
+| `:MonkeyC monkey-graph`              | launch Monkey Graph (FIT graphing)                             |
+| `:MonkeyC monkey-motion`             | launch Monkey Motion                                           |
+| `:MonkeyC era`                       | launch the ERA viewer                                          |
 
 Builds stream progress (e.g. `export` packages every product, so you get
 `exporting (42/234 devices)` on the command line). The full compiler output,
@@ -167,6 +169,20 @@ to the quickfix list.
 
 The type-check level for builds follows the `type_check_level` option (`Strict`
 maps to the compiler's `-l 3`, so a `Strict` build fails on type errors.
+
+### Debugging (DAP)
+
+`:MonkeyC debug [device]` starts a debug session with [nvim-dap]. The Connect IQ
+SDK ships a standard debug adapter (a Java DAP server in `monkeybrains.jar`), so
+this plugin only wires it up: it builds a debuggable (non-release) build, starts
+the simulator, waits for its debug port, and hands off to nvim-dap. Breakpoints,
+stepping, the call stack, variables, and expression evaluation are then driven by
+nvim-dap's usual keymaps and UI.
+
+nvim-dap is an optional dependency: everything else works without it, and the
+adapter is only registered when nvim-dap is installed. `require("dap")` and the
+SDK (>= 2.3.0, which the adapter requires) must both be present. See
+[DAP.md][dap-docs] for how the adapter works under the hood.
 
 ---
 
@@ -206,8 +222,10 @@ capabilities and the jar's service methods) and how it behaves in Neovim:
 attached, your normal LSP keymaps just work.
 
 [ciq]: https://developer.garmin.com/connect-iq/overview/
+[dap-docs]: ./DAP.md
 [dressing.nvim]: https://github.com/stevearc/dressing.nvim
 [lazy.nvim]: https://github.com/folke/lazy.nvim
+[nvim-dap]: https://github.com/mfussenegger/nvim-dap
 [lsp-docs]: ./LSP_DOCS.md
 [snacks.nvim]: https://github.com/folke/snacks.nvim
 [telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim

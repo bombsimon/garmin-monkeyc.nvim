@@ -105,6 +105,17 @@ function M.check()
     health.error("developer_key set but not found: " .. key)
   end
 
+  -- DAP debugging is optional: it needs nvim-dap plus the adapter jars
+  -- (monkeybrains.jar for the debug classes, LanguageServer.jar for gson).
+  local has_dap = pcall(require, "dap")
+  if not has_dap then
+    health.info("nvim-dap not installed; :MonkeyC debug is unavailable")
+  elseif sdk.tool(sdk_path, "monkeybrains.jar") and sdk.language_server_jar(sdk_path) then
+    health.ok("DAP debug adapter (nvim-dap + SDK jars)")
+  else
+    health.warn("DAP debug adapter unavailable: monkeybrains.jar not found in " .. sdk_dir)
+  end
+
   local clients = vim.lsp.get_clients({ name = "monkeyc-lsp" })
   if #clients > 0 then
     health.ok(("language server running (%d client(s) attached)"):format(#clients))
