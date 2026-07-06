@@ -50,12 +50,7 @@ Call the setup function once (all options are optional): >lua
 The plugin registers the `monkeyc-lsp` language server and the |:MonkeyC|
 command.
 
-No developer key yet? Generate one with: >
-
-    openssl genrsa -out key.pem 4096
-    openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
-      -in key.pem -out developer_key.der
-<
+No developer key yet? Run |MonkeyC-generate-key| (needs `openssl`).
 ==============================================================================
 4. Configuration                            *garmin-monkeyc-configuration*
 
@@ -119,6 +114,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                                  *MonkeyC-run*
                                                                 *MonkeyC-test*
                                                               *MonkeyC-export*
+                                                        *MonkeyC-generate-key*
                                                                *MonkeyC-clean*
                                                                 *MonkeyC-logs*
                                                               *MonkeyC-cancel*
@@ -138,6 +134,12 @@ Subcommands:                                                   *MonkeyC-build*
     export [{path}]       Package a distributable `.iq` for the Connect IQ
                           Store (all products, release build). {path} may be a
                           file or directory; defaults to `bin/<project>.iq`.
+
+    generate-key [{path}] Generate a developer key (RSA 4096, PKCS8 DER) with
+                          openssl. {path} defaults to
+                          |garmin-monkeyc-config-developer_key|, else
+                          `~/.ciq/developer_key.der`. Refuses to overwrite an
+                          existing key.
 
     clean                 Remove the `bin/` build output directory.
 
@@ -171,6 +173,7 @@ require("garmin-monkeyc").build_for_device([{device}])
 require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
 require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
+require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
 require("garmin-monkeyc").logs()                   *garmin-monkeyc.logs()*
 require("garmin-monkeyc").cancel()                 *garmin-monkeyc.cancel()*

@@ -20,7 +20,7 @@ Tracking parity with the [official VS Code extension][vscode].
 - [x] Run unit tests - `:MonkeyC test [device]`
 - [x] Export project (`.iq` for the Connect IQ Store) - `:MonkeyC export [path]`
 - [ ] New project
-- [ ] Generate a developer key
+- [x] Generate a developer key - `:MonkeyC generate-key [path]`
 - [x] Verify installation - `:checkhealth garmin-monkeyc`
 - [ ] Edit manifest (products, permissions, languages, application, annotations)
 - [ ] Regenerate UUID
@@ -114,19 +114,7 @@ Also falls back to the builtin when no Monkey C client is attached.
 ## Building and running
 
 Requires a **developer key** to pass to the compiler when building, set
-`developer_key`.
-
-No key yet? Generate one with:
-
-```sh
-openssl genrsa -out key.pem 4096 \
-  && openssl pkcs8 \
-    -topk8 -inform PEM -outform DER -nocrypt \
-    -in key.pem \
-    -out developer_key.der
-```
-
-Then:
+`developer_key`. No key yet? Run `:MonkeyC generate-key` (needs `openssl`).
 
 | command                              | action                                                       |
 | ------------------------------------ | ------------------------------------------------------------ |
@@ -135,6 +123,7 @@ Then:
 | `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it          |
 | `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator        |
 | `:MonkeyC export [path]`             | package a `.iq` for the store (all products, release)        |
+| `:MonkeyC generate-key [path]`       | generate a developer key (RSA 4096, PKCS8 DER) via openssl   |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 | `:MonkeyC logs`                      | open the last build's full output in a split                 |
 | `:MonkeyC cancel`                    | stop the running build                                       |

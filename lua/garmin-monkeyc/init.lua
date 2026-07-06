@@ -60,6 +60,10 @@ function M.cancel()
   return require("garmin-monkeyc.build").cancel()
 end
 
+function M.generate_key(path)
+  return require("garmin-monkeyc.build").generate_key(path)
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end

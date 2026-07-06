@@ -352,6 +352,64 @@ function M.clean()
   notify("removed " .. bin)
 end
 
+-- Generate a developer key (RSA 4096, PKCS8 DER, like the VS Code extension)
+-- via openssl. {path} defaults to the developer_key option, else
+-- ~/.ciq/developer_key.der. Refuses to overwrite an existing key.
+function M.generate_key(path)
+  if vim.fn.executable("openssl") == 0 then
+    return notify("openssl not found on PATH (needed to generate a key)", vim.log.levels.ERROR)
+  end
+
+  local output = (path and path ~= "" and vim.fn.expand(path))
+    or config.options.developer_key
+    or vim.fn.expand("~/.ciq/developer_key.der")
+
+  if vim.uv.fs_stat(output) then
+    return notify("a key already exists at " .. output .. " (delete it first to regenerate)", vim.log.levels.WARN)
+  end
+
+  vim.fn.mkdir(vim.fs.dirname(output), "p")
+
+  notify("generating developer key…")
+
+  local function fail(stderr)
+    notify("key generation failed: " .. (stderr or ""), vim.log.levels.ERROR)
+  end
+
+  -- monkeyc wants a PKCS#8 DER RSA key (the same as Node's crypto pkcs8/der
+  -- output that the VS Code extension produces). genrsa emits a PKCS#1 key, so
+  -- pipe it through pkcs8 to wrap and DER-encode it. openssl genpkey's encoding
+  -- is rejected by the compiler ("Unable to decode key"), so avoid it.
+  vim.system({ "openssl", "genrsa", "4096" }, { text = true }, function(generated)
+    vim.schedule(function()
+      if generated.code ~= 0 then
+        return fail(generated.stderr)
+      end
+
+      local convert = { "openssl", "pkcs8", "-topk8", "-inform", "PEM", "-outform", "DER", "-nocrypt", "-out", output }
+
+      vim.system(convert, { text = true, stdin = generated.stdout }, function(converted)
+        vim.schedule(function()
+          if converted.code ~= 0 then
+            return fail(converted.stderr)
+          end
+
+          -- Use it for the rest of this session; suggest persisting it.
+          local persist = config.options.developer_key ~= output
+          config.options.developer_key = output
+
+          notify(
+            ("developer key written to %s%s"):format(
+              output,
+              persist and (' (set developer_key = "' .. output .. '")') or ""
+            )
+          )
+        end)
+      end)
+    end)
+  end)
+end
+
 -- Stop the running build.
 function M.cancel()
   if not current_build then
@@ -389,6 +447,7 @@ local subcommands = {
   ["run"] = M.run,
   ["test"] = M.test,
   ["export"] = M.export,
+  ["generate-key"] = M.generate_key,
   ["clean"] = M.clean,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,
@@ -399,6 +458,12 @@ local device_subcommands = {
   ["build-for-device"] = true,
   ["run"] = true,
   ["test"] = true,
+}
+
+-- Subcommands whose argument is a filesystem path.
+local path_subcommands = {
+  ["export"] = true,
+  ["generate-key"] = true,
 }
 
 function M.setup()
@@ -433,8 +498,8 @@ function M.setup()
         end, sdk.manifest_devices(project_directory()))
       end
 
-      -- export takes an output path.
-      if subcommand == "export" then
+      -- export / generate-key take a filesystem path.
+      if path_subcommands[subcommand] then
         return vim.fn.getcompletion(arglead, "file")
       end
 

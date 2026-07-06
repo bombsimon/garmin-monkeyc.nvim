@@ -41,6 +41,15 @@ function M.check()
     health.error("java not found on PATH", { "Install a JRE (17+) and ensure `java` is on PATH" })
   end
 
+  -- openssl is only needed for :MonkeyC generate-key.
+  if vim.fn.executable("openssl") == 1 then
+    health.ok("openssl (for :MonkeyC generate-key)")
+  else
+    health.warn("openssl not found; :MonkeyC generate-key will not work", {
+      "Install openssl to generate a developer key, or provide your own",
+    })
+  end
+
   -- SDK path (falls back to the per-OS default when setup() hasn't run).
   local sdk_path = config.options.sdk_path or sdk.default_sdk_path()
 
