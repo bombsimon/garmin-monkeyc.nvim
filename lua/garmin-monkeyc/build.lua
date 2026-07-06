@@ -176,7 +176,8 @@ function M.build_for_device(device)
   end)
 end
 
-function M.run_for_device(device)
+-- Build and run in the simulator.
+function M.run(device)
   local function build_and_run(chosen)
     compile(chosen, {
       on_success = function(prg)
@@ -238,7 +239,7 @@ end
 local subcommands = {
   ["build"] = M.build,
   ["build-for-device"] = M.build_for_device,
-  ["run-for-device"] = M.run_for_device,
+  ["run"] = M.run,
   ["test"] = M.test,
   ["clean"] = M.clean,
 }
@@ -246,7 +247,7 @@ local subcommands = {
 -- Subcommands whose argument is a device id (used to scope completion).
 local device_subcommands = {
   ["build-for-device"] = true,
-  ["run-for-device"] = true,
+  ["run"] = true,
   ["test"] = true,
 }
 

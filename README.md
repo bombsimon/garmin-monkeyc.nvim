@@ -14,7 +14,7 @@ Tracking parity with the [official VS Code extension][vscode].
       document/workspace symbols, folding, call/type hierarchy (see
       [LSP capabilities](#lsp-capabilities))
 - [x] Build for device - `:MonkeyC build-for-device [device]`
-- [x] Run in simulator - `:MonkeyC run-for-device [device]`
+- [x] Run in simulator - `:MonkeyC run [device]`
 - [x] Build current project - `:MonkeyC build`
 - [x] Clean project - `:MonkeyC clean`
 - [x] Run unit tests - `:MonkeyC test [device]`
@@ -132,7 +132,7 @@ Then:
 | ------------------------------------ | ------------------------------------------------------------ |
 | `:MonkeyC build`                     | build `bin/<project>.prg` for the default device (no prompt) |
 | `:MonkeyC build-for-device [device]` | compile `bin/<project>.prg` for `device`                     |
-| `:MonkeyC run-for-device [device]`   | build, launch the simulator, and push the app to it          |
+| `:MonkeyC run [device]`              | build, launch the simulator, and push the app to it          |
 | `:MonkeyC test [device]`             | build unit tests (`-t`) and run them in the simulator        |
 | `:MonkeyC clean`                     | remove the `bin/` build output directory                     |
 

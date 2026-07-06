@@ -20,7 +20,7 @@ M.options = {
   -- device id to type-check against; nil = none (like VS Code before a build)
   device = nil,
   -- absolute path to the developer key (.der) used to sign builds (-y);
-  -- required by :MonkeyC build-for-device / run-for-device
+  -- required by :MonkeyC build / build-for-device / run / test
   developer_key = nil,
 }
 
