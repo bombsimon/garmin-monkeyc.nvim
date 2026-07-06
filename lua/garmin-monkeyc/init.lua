@@ -13,6 +13,7 @@ local M = {}
 
 -- Re-exported so callers can validate/offer the values (see lsp.lua).
 M.type_check_levels = require("garmin-monkeyc.lsp").type_check_levels
+M.optimization_levels = require("garmin-monkeyc.constants").optimization_levels
 
 function M.setup(opts)
   -- Resolve options once; feature modules read them from config.

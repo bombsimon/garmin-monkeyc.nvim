@@ -7,6 +7,11 @@
 return {
   server_name = "monkeyc-lsp",
 
+  -- Valid optimization_level option values (matching the VS Code extension's
+  -- monkeyC.optimizationLevel enum). "Default" omits -O; build.lua maps the
+  -- rest to the compiler's -O 0..3.
+  optimization_levels = { "Default", "None", "Basic", "Fast", "Slow" },
+
   -- The permissions a manifest can declare. Not discoverable from the SDK, so
   -- they are enumerated here (matching the VS Code extension's picklist).
   permissions = {

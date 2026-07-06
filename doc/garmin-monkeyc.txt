@@ -70,6 +70,13 @@ type_check_level        string (default: "Default")
         One of "Default", "Off", "Gradual", "Informative", "Strict". Used both
         for LSP type checking and as the compiler `-l` level when building.
 
+                                        *garmin-monkeyc-config-optimization_level*
+optimization_level      string (default: "Default")
+        Compiler optimization level for builds and exports; one of "Default",
+        "None", "Basic", "Fast", "Slow" (matching the VS Code extension's
+        monkeyC.optimizationLevel setting). "Default" omits `-O` so the compiler
+        uses its own default (level 1); the rest map to `-O 0..3`.
+
                                         *garmin-monkeyc-config-function_completion*
 function_completion     string (default: "snippet")
         "snippet" inserts `name()` with the cursor between the parens (needs a
@@ -248,6 +255,9 @@ require("garmin-monkeyc").cancel()                 *garmin-monkeyc.cancel()*
 
 require("garmin-monkeyc").type_check_levels        *garmin-monkeyc.type_check_levels*
         List of valid |garmin-monkeyc-config-type_check_level| values.
+
+require("garmin-monkeyc").optimization_levels      *garmin-monkeyc.optimization_levels*
+        List of valid |garmin-monkeyc-config-optimization_level| values.
 
 ==============================================================================
 7. Health check                                    *garmin-monkeyc-health*

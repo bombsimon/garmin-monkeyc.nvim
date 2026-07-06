@@ -13,6 +13,10 @@ M.options = {
   capabilities = nil,
   -- one of require("garmin-monkeyc").type_check_levels
   type_check_level = "Default",
+  -- compiler optimization level for builds/exports; one of
+  -- require("garmin-monkeyc").optimization_levels. "Default" omits -O so the
+  -- compiler uses its own default (matching VS Code's default setting).
+  optimization_level = "Default",
   -- "snippet" (name() with cursor inside) | "strip" (just name)
   function_completion = "snippet",
   -- "Sdks" directory; defaults per-OS via sdk.default_sdk_path()

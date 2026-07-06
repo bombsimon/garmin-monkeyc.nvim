@@ -62,6 +62,7 @@ With [lazy.nvim]:
       capabilities = require("cmp_nvim_lsp").default_capabilities(),
       on_attach = my_on_attach,
       type_check_level = "Default", -- Default | Off | Gradual | Informative | Strict
+      optimization_level = "Default", -- Default | None | Basic | Fast | Slow
       function_completion = "snippet", -- "snippet" (cursor inside ()) | "strip"
       sdk_path = nil, -- path to SDK installation, use if not in OS default path
       device = nil, -- device id for type-checking (leave blank unless needed)
@@ -104,6 +105,7 @@ Also falls back to the builtin when no Monkey C client is attached.
 | `capabilities`        | `nil`              | base client capabilities; merged with the required overrides                                                |
 | `on_attach`           | `nil`              | called on attach (after the plugin's own setup)                                                             |
 | `type_check_level`    | `"Default"`        | one of `require("garmin-monkeyc").type_check_levels`                                                        |
+| `optimization_level`  | `"Default"`        | compiler `-O` for builds/exports; one of `require("garmin-monkeyc").optimization_levels` (`"Default"` omits `-O`) |
 | `function_completion` | `"snippet"`        | `"snippet"` inserts `name()` with the cursor inside (needs a snippet engine); `"strip"` inserts just `name` |
 | `sdk_path`            | per-OS (see above) | the `Sdks` directory to search for `LanguageServer.jar`                                                     |
 | `device`              | none               | device id to type-check against; default matches VS Code (no device until you pick one)                     |

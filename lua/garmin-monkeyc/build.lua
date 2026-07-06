@@ -18,6 +18,16 @@ local typecheck_flag = {
   Strict = "3",
 }
 
+-- Map our optimization_level to the compiler's -O value, matching the VS Code
+-- extension's monkeyC.optimizationLevel setting. "Default" omits -O so the
+-- compiler uses its own default (level 1).
+local optimization_flag = {
+  None = "0",
+  Basic = "1",
+  Fast = "2",
+  Slow = "3",
+}
+
 local function notify(message, level)
   vim.notify("garmin-monkeyc: " .. message, level or vim.log.levels.INFO)
 end
@@ -134,6 +144,11 @@ local function compile(opts)
   local flag = typecheck_flag[options.type_check_level]
   if flag then
     vim.list_extend(args, { "-l", flag })
+  end
+
+  local optimization = optimization_flag[options.optimization_level]
+  if optimization then
+    vim.list_extend(args, { "-O", optimization })
   end
 
   local label = opts.label or ("building for " .. opts.device)
