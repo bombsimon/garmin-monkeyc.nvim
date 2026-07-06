@@ -44,6 +44,10 @@ function M.run_for_device(device)
   return require("garmin-monkeyc.build").run_for_device(device)
 end
 
+function M.test(device)
+  return require("garmin-monkeyc.build").test(device)
+end
+
 function M.clean()
   return require("garmin-monkeyc.build").clean()
 end
