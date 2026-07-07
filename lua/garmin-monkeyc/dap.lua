@@ -81,6 +81,12 @@ function M.setup()
       cp,
       "com.garmin.monkeybrains.monkeydodo.DebugAdapterProtocol",
     },
+    options = {
+      -- The JVM adapter (java plus monkeybrains.jar and LanguageServer.jar) is
+      -- slow to start, so it routinely exceeds nvim-dap's default 4s initialize
+      -- timeout and prints a spurious "didn't respond" warning before it works.
+      initialize_timeout_sec = 30,
+    },
   }
 
   return true
@@ -254,6 +260,102 @@ function M.debug(device, opts)
   end
 
   build.pick_device(launch)
+end
+
+-- The current buffer's project directory (holding manifest.xml).
+local function current_project()
+  local root = vim.fs.root(0, { "manifest.xml", ".git" }) or vim.uv.cwd()
+
+  return sdk.project_directory(root)
+end
+
+-- Debug a complication publisher and subscriber together. Only watch faces can
+-- subscribe, so the current project's manifest type decides the role: a
+-- watchface is the subscriber and we prompt for the publisher app, otherwise
+-- the current project is the publisher and we prompt for the watch face. The
+-- subscriber (watch face) is the primary debug target (prg); the publisher
+-- rides along as additionalPrg.
+function M.debug_complication(device)
+  local dap = get_dap()
+
+  if not dap then
+    return notify("nvim-dap is not installed; DAP debugging is unavailable", vim.log.levels.ERROR)
+  end
+
+  if not dap.adapters.monkeyc and not M.setup() then
+    return notify("could not register the Monkey C debug adapter (SDK jars not found)", vim.log.levels.ERROR)
+  end
+
+  local build = require("garmin-monkeyc.build")
+  local current_dir = current_project()
+
+  if not vim.uv.fs_stat(vim.fs.joinpath(current_dir, "manifest.xml")) then
+    return notify("no manifest.xml in the current project", vim.log.levels.ERROR)
+  end
+
+  local current_is_subscriber = sdk.app_type(current_dir) == "watchface"
+  local prompt = current_is_subscriber and "Publisher app project directory: "
+    or "Subscriber (watch face) project directory: "
+
+  vim.ui.input({ prompt = prompt, completion = "dir" }, function(input)
+    if not input or input == "" then
+      return
+    end
+
+    local other_dir = sdk.project_directory(vim.fn.expand(input))
+
+    if not vim.uv.fs_stat(vim.fs.joinpath(other_dir, "manifest.xml")) then
+      return notify("no manifest.xml found in " .. other_dir, vim.log.levels.ERROR)
+    end
+
+    local subscriber_dir = current_is_subscriber and current_dir or other_dir
+    local publisher_dir = current_is_subscriber and other_dir or current_dir
+
+    local function launch(chosen)
+      -- Build the watch face (primary) then the publisher (additional), both as
+      -- debuggable builds, then hand both prgs to the adapter.
+      build.build_debug(chosen, function(subscriber_prg)
+        build.build_debug(chosen, function(publisher_prg)
+          if not start_simulator() then
+            return
+          end
+
+          notify("waiting for the simulator…")
+
+          wait_for_simulator(function(ready)
+            if not ready then
+              return notify(
+                ("simulator did not open its debug port (%s:%d-%d); is it running?"):format(
+                  SIMULATOR_HOST,
+                  SIMULATOR_PORTS[1],
+                  SIMULATOR_PORTS[#SIMULATOR_PORTS]
+                ),
+                vim.log.levels.ERROR
+              )
+            end
+
+            dap.run({
+              type = "monkeyc",
+              request = "launch",
+              name = "Monkey C complication: " .. chosen,
+              device = chosen,
+              prg = subscriber_prg,
+              prgDebugXml = subscriber_prg .. ".debug.xml",
+              additionalPrg = publisher_prg,
+              additionalPrgDebugXml = publisher_prg .. ".debug.xml",
+              stopAtLaunch = false,
+            })
+          end)
+        end, { directory = publisher_dir, label = "building publisher for debug on " .. chosen })
+      end, { directory = subscriber_dir, label = "building watch face for debug on " .. chosen })
+    end
+
+    if device and device ~= "" then
+      return launch(device)
+    end
+
+    build.pick_device(launch)
+  end)
 end
 
 return M

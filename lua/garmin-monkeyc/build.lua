@@ -82,6 +82,7 @@ end
 --   unit_test  - build with -t (unit tests) to a separate prg
 --   package    - build a distributable application package (-e -r, .iq)
 --   output     - override the output path
+--   directory  - project directory to build (defaults to the current project)
 --   label      - progress message ("building for X" by default)
 --   on_success - called with the output path
 -- Errors go to the quickfix list.
@@ -104,7 +105,7 @@ local function compile(opts)
     return notify("monkeybrains.jar not found under " .. options.sdk_path, vim.log.levels.ERROR)
   end
 
-  local directory = project_directory()
+  local directory = opts.directory or project_directory()
   local output = opts.output or output_prg(directory, opts.device, opts.unit_test)
 
   vim.fn.mkdir(vim.fs.dirname(output), "p")
@@ -284,9 +285,17 @@ function M.build_for_device(device)
 end
 
 -- Build a debuggable (non-release) prg for the device and call on_success(prg).
--- The compiler emits <prg>.debug.xml alongside it. Exposed for the DAP module.
-function M.build_debug(device, on_success)
-  compile({ device = device, label = "building for debug on " .. device, on_success = on_success })
+-- The compiler emits <prg>.debug.xml alongside it. opts.directory builds another
+-- project, opts.label overrides the progress message. Exposed for the DAP module.
+function M.build_debug(device, on_success, opts)
+  opts = opts or {}
+
+  compile({
+    device = device,
+    directory = opts.directory,
+    label = opts.label or ("building for debug on " .. device),
+    on_success = on_success,
+  })
 end
 
 -- Build and run in the simulator.
@@ -610,6 +619,9 @@ local subcommands = {
   ["debug-native-pairing"] = function(device)
     require("garmin-monkeyc.dap").debug(device, { native_pairing = true })
   end,
+  ["debug-complication"] = function(device)
+    require("garmin-monkeyc.dap").debug_complication(device)
+  end,
   ["export"] = M.export,
   ["generate-key"] = M.generate_key,
   ["new-project"] = M.new_project,
@@ -637,6 +649,7 @@ local device_subcommands = {
   ["test"] = true,
   ["debug"] = true,
   ["debug-native-pairing"] = true,
+  ["debug-complication"] = true,
 }
 
 -- Subcommands whose argument is a filesystem path.

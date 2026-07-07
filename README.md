@@ -27,8 +27,8 @@ Tracking the [VS Code extension][vscode].
 - [x] View docs / open samples - `:MonkeyC docs` / `:MonkeyC samples`
 - [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
 - [x] Native pairing - `:MonkeyC debug-native-pairing [device]`
+- [x] Complication launch - `:MonkeyC debug-complication [device]`
 - [ ] Configure barrel
-- [ ] Complication launch (publisher + subscriber)
 
 ## Requirements
 
@@ -95,6 +95,7 @@ Neovim detects `.mc` as `m4`.
 | `:MonkeyC test [device]`                 | build unit tests (`-t`) and run them in the simulator          |
 | `:MonkeyC debug [device]`                | build, start the simulator, and debug via DAP (needs nvim-dap) |
 | `:MonkeyC debug-native-pairing [device]` | debug in sensor (ANT/BLE) native pairing mode                  |
+| `:MonkeyC debug-complication [device]`   | debug a complication publisher and subscriber together         |
 | `:MonkeyC export [path]`                 | package a `.iq` for the store (all products, release)          |
 | `:MonkeyC generate-key [path]`           | generate a developer key (RSA 4096, PKCS8 DER) via openssl     |
 | `:MonkeyC new-project [dir]`             | scaffold a new project from an SDK template (prompts)          |
@@ -119,8 +120,8 @@ A few things to know:
 - `:MonkeyC build` uses the `device` option, falling back to the first product in
   `manifest.xml`. Commands that take `[device]` prompt when it is omitted, using
   `vim.ui.select`. Any ui-select frontend ([telescope-ui-select], [dressing.nvim],
-  [snacks.nvim]) turns that into a fuzzy picker, and device ids tab-complete on the
-  command line.
+  [snacks.nvim]) turns that into a fuzzy picker, and device ids tab-complete on
+  the command line.
 - Builds stream progress on the command line. `export` packages every product, so
   you get `exporting (42/234 devices)`. Full output is kept for `:MonkeyC logs`,
   and errors go to the quickfix list.
@@ -131,15 +132,24 @@ A few things to know:
 
 ## Debugging (DAP)
 
-`:MonkeyC debug [device]` starts a debug session with [nvim-dap]. The SDK ships a
-standard debug adapter (a Java DAP server in `monkeybrains.jar`), so the plugin
-just wires it up. It builds a non-release build, starts the simulator, waits for
-its debug port, and hands off to nvim-dap. Breakpoints, stepping, the call stack,
-variables, and expression evaluation all work through nvim-dap.
+`:MonkeyC debug [device]` starts a debug session with [nvim-dap]. The SDK ships
+a standard debug adapter (a Java DAP server in `monkeybrains.jar`), so the
+plugin just wires it up. It builds a non-release build, starts the simulator,
+waits for its debug port, and hands off to nvim-dap. Breakpoints, stepping, the
+call stack, variables, and expression evaluation all work through nvim-dap.
 
 `:MonkeyC debug-native-pairing [device]` is the same flow run in sensor native
 pairing mode, for apps and data fields that pair with ANT/BLE sensors through a
 `SensorDelegate`.
+
+`:MonkeyC debug-complication [device]` debugs a complication publisher and
+subscriber together (the watch face reads data the publisher app provides). Run
+it from either project. If the current project is a watch face it is the
+subscriber and you are prompted for the publisher app, otherwise it is the
+publisher and you are prompted for the watch face. Both are built and loaded
+into the simulator, with the watch face as the primary debug target. Getting
+values to actually flow in the simulator has some non-obvious steps; see
+[DAP.md][dap-docs].
 
 nvim-dap is optional. Everything else works without it, and the adapter registers
 only when nvim-dap is present. Debugging needs an SDK >= 2.3.0. Variables are

@@ -123,6 +123,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                                 *MonkeyC-test*
                                                                *MonkeyC-debug*
                                                 *MonkeyC-debug-native-pairing*
+                                                  *MonkeyC-debug-complication*
                                                               *MonkeyC-export*
                                                         *MonkeyC-generate-key*
                                                          *MonkeyC-new-project*
@@ -165,6 +166,15 @@ Subcommands:                                                   *MonkeyC-build*
                           Same as debug, but runs in sensor (ANT/BLE) native
                           pairing mode, for apps and data fields that pair with
                           wireless sensors through a SensorDelegate.
+
+    debug-complication [{device}]
+                          Debug a complication publisher and subscriber
+                          together. Only watch faces subscribe, so the current
+                          project's manifest type picks the role: a watchface is
+                          the subscriber and prompts for the publisher app,
+                          otherwise it is the publisher and prompts for the watch
+                          face. Both are built; the watch face is the primary
+                          debug target.
 
     export [{path}]       Package a distributable `.iq` for the Connect IQ
                           Store (all products, release build). {path} may be a
@@ -250,6 +260,8 @@ require("garmin-monkeyc").run([{device}])          *garmin-monkeyc.run()*
 require("garmin-monkeyc").test([{device}])         *garmin-monkeyc.test()*
 require("garmin-monkeyc").debug([{device}], [{opts}]) *garmin-monkeyc.debug()*
         opts.native_pairing runs in sensor (ANT/BLE) native pairing mode.
+require("garmin-monkeyc").debug_complication([{device}]) *garmin-monkeyc.debug_complication()*
+        Debug a complication publisher and subscriber together.
 require("garmin-monkeyc").export([{output}])       *garmin-monkeyc.export()*
 require("garmin-monkeyc").generate_key([{path}])   *garmin-monkeyc.generate_key()*
 require("garmin-monkeyc").new_project([{dir}])     *garmin-monkeyc.new_project()*
@@ -290,13 +302,30 @@ absent this is a no-op and the rest of the plugin is unaffected.
 
 `:MonkeyC debug [{device}]` then:
     1. builds a debuggable (non-release) build, emitting `<prg>.debug.xml`;
-    2. starts the simulator and waits for its debug port (127.0.0.1:40000);
+    2. starts the simulator and waits for its debug port (127.0.0.1:1234-1238);
     3. launches an nvim-dap session against the adapter.
 
 Breakpoints, stepping, the call stack, variables, and expression evaluation
 are provided by nvim-dap; use its usual keymaps and UI. Debugging requires an
 SDK that supports it (>= 2.3.0). Release/export builds (`-r`) are not
 debuggable. See DAP.md in the plugin repository for the details.
+
+Complication publisher + subscriber                     *garmin-monkeyc-dap-complication*
+
+`:MonkeyC debug-complication` loads a watch face (subscriber) and a publisher
+app together in one session. To see values actually flow (this applies to the
+VS Code extension too, none of it is plugin-specific):
+
+    - The publisher must publish from a background service
+      (System.ServiceDelegate.onTemporalEvent). A foreground timer will not run
+      while a watch face is the foreground app.
+    - Fire a publish in the simulator with
+      Simulation > Background Event > Temporal Event, targeting the publisher.
+      On a real device the temporal event fires on its own, at most every 5
+      minutes.
+    - The subscriber discovers the publisher's complication by iterating
+      Complications.getComplications() (custom ones report
+      COMPLICATION_TYPE_INVALID) and matching its longLabel.
 
 ==============================================================================
 8. Health check                                    *garmin-monkeyc-health*

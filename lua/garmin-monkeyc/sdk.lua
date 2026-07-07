@@ -123,6 +123,18 @@ function M.jungle_files(directory)
   return jungle_files
 end
 
+-- The manifest's application type ("watchface", "watch-app", "datafield",
+-- "widget", "audio-content-provider-app", ...), or nil if there is no manifest.
+function M.app_type(directory)
+  local manifest = vim.fs.joinpath(directory, "manifest.xml")
+
+  if not vim.uv.fs_stat(manifest) then
+    return nil
+  end
+
+  return table.concat(vim.fn.readfile(manifest), "\n"):match('<iq:application[^>]-type="([^"]*)"')
+end
+
 -- Device ids declared in the project's manifest (<iq:product id="…">), in
 -- declaration order.
 function M.manifest_devices(directory)
