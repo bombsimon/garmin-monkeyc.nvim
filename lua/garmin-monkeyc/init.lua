@@ -105,6 +105,10 @@ function M.edit_application()
   return require("garmin-monkeyc.manifest").edit_application()
 end
 
+function M.configure_barrel()
+  return require("garmin-monkeyc.barrel").configure_barrel()
+end
+
 -- SDK tool / documentation launchers.
 function M.docs()
   return require("garmin-monkeyc.tools").docs()

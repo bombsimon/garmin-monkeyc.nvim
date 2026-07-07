@@ -631,6 +631,15 @@ local subcommands = {
   ["edit-languages"] = manifest.edit_languages,
   ["edit-annotations"] = manifest.edit_annotations,
   ["edit-application"] = manifest.edit_application,
+  ["configure-barrel"] = function(path)
+    local barrel = require("garmin-monkeyc.barrel")
+
+    if path and path ~= "" then
+      barrel.add_barrel(path)
+    else
+      barrel.configure_barrel()
+    end
+  end,
   ["clean"] = M.clean,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,
@@ -657,6 +666,7 @@ local path_subcommands = {
   ["export"] = true,
   ["generate-key"] = true,
   ["new-project"] = true,
+  ["configure-barrel"] = true,
 }
 
 function M.setup()

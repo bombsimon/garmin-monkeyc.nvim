@@ -133,6 +133,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                       *MonkeyC-edit-languages*
                                                     *MonkeyC-edit-annotations*
                                                     *MonkeyC-edit-application*
+                                                    *MonkeyC-configure-barrel*
                                                                *MonkeyC-clean*
                                                                 *MonkeyC-logs*
                                                               *MonkeyC-cancel*
@@ -213,6 +214,17 @@ Subcommands:                                                   *MonkeyC-build*
 
     edit-application      Edit the application type and minimum API level.
 
+    configure-barrel [{path}]
+                          Add, update, or remove a Monkey Barrel (shared
+                          library) dependency. With no {path} it prompts to add
+                          a barrel, or to update or remove an existing one
+                          (update re-reads the barrel's current version); with
+                          {path} (a barrel project's directory or monkey.jungle)
+                          it adds that barrel. Updates barrels.jungle and the
+                          manifest's <iq:barrels>. The barrel path is written
+                          relative to the project when possible. Builds pick up
+                          barrels.jungle automatically.
+
     clean                 Remove the `bin/` build output directory.
 
     logs                  Open the most recent build's full output in a split.
@@ -271,6 +283,7 @@ require("garmin-monkeyc").edit_permissions()       *garmin-monkeyc.edit_permissi
 require("garmin-monkeyc").edit_languages()         *garmin-monkeyc.edit_languages()*
 require("garmin-monkeyc").edit_annotations()       *garmin-monkeyc.edit_annotations()*
 require("garmin-monkeyc").edit_application()        *garmin-monkeyc.edit_application()*
+require("garmin-monkeyc").configure_barrel()        *garmin-monkeyc.configure_barrel()*
 require("garmin-monkeyc").docs()                   *garmin-monkeyc.docs()*
 require("garmin-monkeyc").samples()                *garmin-monkeyc.samples()*
 require("garmin-monkeyc").sdk_manager()            *garmin-monkeyc.sdk_manager()*

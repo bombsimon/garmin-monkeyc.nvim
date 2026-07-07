@@ -31,7 +31,7 @@ Tracking the [VS Code extension][vscode].
 - [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
 - [x] Native pairing - `:MonkeyC debug-native-pairing [device]`
 - [x] Complication launch - `:MonkeyC debug-complication [device]`
-- [ ] Configure barrel
+- [x] Configure barrel - `:MonkeyC configure-barrel [path]` ⚙️
 
 ⚙️ reimplemented in Lua; everything else drives the SDK's own binaries, the same
 code the VS Code extension runs.
@@ -111,6 +111,7 @@ Neovim detects `.mc` as `m4`.
 | `:MonkeyC edit-languages`                | edit the manifest's languages                                  |
 | `:MonkeyC edit-annotations`              | edit the manifest's annotations                                |
 | `:MonkeyC edit-application`              | edit application type and minimum API level                    |
+| `:MonkeyC configure-barrel [path]`       | add, update, or remove a Monkey Barrel dependency              |
 | `:MonkeyC clean`                         | remove the `bin/` build output directory                       |
 | `:MonkeyC logs`                          | open the last build's full output in a split                   |
 | `:MonkeyC cancel`                        | stop the running build                                         |

@@ -120,6 +120,24 @@ function M.jungle_files(directory)
     jungle_files = { directory .. "/monkey.jungle" }
   end
 
+  -- Keep monkey.jungle first and barrels.jungle last (the barrel jungle appends
+  -- to base.barrelPath, so it reads more naturally after the project jungle,
+  -- matching the VS Code extension's `-f monkey.jungle;barrels.jungle` order).
+  table.sort(jungle_files, function(a, b)
+    local function rank(file)
+      local name = vim.fs.basename(file)
+      if name == "monkey.jungle" then
+        return 0
+      elseif name == "barrels.jungle" then
+        return 2
+      end
+
+      return 1
+    end
+
+    return rank(a) < rank(b)
+  end)
+
   return jungle_files
 end
 
