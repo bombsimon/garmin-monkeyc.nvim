@@ -1,8 +1,11 @@
 # garmin-monkeyc.nvim
 
-Neovim port of the [official Monkey C VS Code extension][vscode]. It wires up the
-language server shipped as `LanguageServer.jar` in the [Connect IQ SDK][ciq] and
-adds the SDK build, run, test, debug, and project commands.
+Neovim port of the [official Monkey C VS Code extension][vscode]. Where it can it
+runs the same [Connect IQ SDK][ciq] code the extension does: the language server
+(`LanguageServer.jar`) and the debug adapter (`DebugAdapterProtocol` in
+`monkeybrains.jar`) are Garmin's own binaries, and build, run, test, debug and
+export all call the same compiler. A few commands are instead reimplemented in
+Lua (marked ⚙️ below), since they are just file, XML or `openssl` work.
 
 ## Feature parity
 
@@ -15,20 +18,23 @@ Tracking the [VS Code extension][vscode].
 - [x] Run in simulator - `:MonkeyC run [device]`
 - [x] Run unit tests - `:MonkeyC test [device]`
 - [x] Debug (DAP) - `:MonkeyC debug [device]` (needs [nvim-dap])
-- [x] Clean project - `:MonkeyC clean`
+- [x] Clean project - `:MonkeyC clean` ⚙️
 - [x] Export `.iq` for the Connect IQ Store - `:MonkeyC export [path]`
-- [x] New project - `:MonkeyC new-project [dir]`
-- [x] Generate a developer key - `:MonkeyC generate-key [path]`
+- [x] New project - `:MonkeyC new-project [dir]` ⚙️
+- [x] Generate a developer key - `:MonkeyC generate-key [path]` ⚙️
 - [x] Edit manifest - `:MonkeyC edit-products` / `edit-permissions` /
-      `edit-languages` / `edit-annotations` / `edit-application`
-- [x] Regenerate UUID - `:MonkeyC regenerate-uuid`
-- [x] Verify installation - `:checkhealth garmin-monkeyc`
+      `edit-languages` / `edit-annotations` / `edit-application` ⚙️
+- [x] Regenerate UUID - `:MonkeyC regenerate-uuid` ⚙️
+- [x] Verify installation - `:checkhealth garmin-monkeyc` ⚙️
 - [x] Open SDK Manager - `:MonkeyC sdk-manager`
 - [x] View docs / open samples - `:MonkeyC docs` / `:MonkeyC samples`
 - [x] External tools - `:MonkeyC monkey-graph` / `monkey-motion` / `era`
 - [x] Native pairing - `:MonkeyC debug-native-pairing [device]`
 - [x] Complication launch - `:MonkeyC debug-complication [device]`
 - [ ] Configure barrel
+
+⚙️ reimplemented in Lua; everything else drives the SDK's own binaries, the same
+code the VS Code extension runs.
 
 ## Requirements
 
