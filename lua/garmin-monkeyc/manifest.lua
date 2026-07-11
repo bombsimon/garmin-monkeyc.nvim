@@ -1,8 +1,8 @@
 -- Edit the project manifest: products, permissions, languages, annotations and
 -- application attributes.
 --
--- Products (from the installed devices) and permissions (from a known set) are
--- chosen with a checkbox buffer. Languages/annotations have no enumerable value
+-- Products (installed devices), permissions and languages (each from a known
+-- set) are chosen with a checkbox buffer. Annotations have no enumerable value
 -- set, so they use a free-text list buffer (one entry per line). Application
 -- attributes are edited with prompts.
 
@@ -386,7 +386,42 @@ function M.edit_permissions()
 end
 
 function M.edit_languages()
-  edit_list(sections.languages, "languages")
+  local path = manifest_path()
+
+  if not vim.uv.fs_stat(path) then
+    return notify("no manifest.xml found", vim.log.levels.ERROR)
+  end
+
+  local selected = {}
+  for _, code in ipairs(current_values(read(path), sections.languages)) do
+    selected[code] = true
+  end
+
+  local entries, seen = {}, {}
+
+  for _, language in ipairs(constants.languages) do
+    seen[language.code] = true
+    entries[#entries + 1] = {
+      label = language.name,
+      value = language.code,
+      checked = selected[language.code] == true,
+    }
+  end
+
+  -- Keep any language the manifest declares that is not in the known set.
+  for code in pairs(selected) do
+    if not seen[code] then
+      entries[#entries + 1] = { label = code .. " (unknown)", value = code, checked = true }
+    end
+  end
+
+  table.sort(entries, function(a, b)
+    return a.label < b.label
+  end)
+
+  checkbox_ui("languages", entries, function(values)
+    set_section(path, sections.languages, values)
+  end)
 end
 
 function M.edit_annotations()

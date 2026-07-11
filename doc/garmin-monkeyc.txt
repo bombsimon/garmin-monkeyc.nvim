@@ -208,9 +208,12 @@ Subcommands:                                                   *MonkeyC-build*
                           permission select it automatically; deselecting
                           Background deselects them.
 
-    edit-languages        Edit the manifest's <iq:languages> language codes or
-    edit-annotations      <iq:annotations>, one entry per line (:w save, q
-                          cancel).
+    edit-languages        Choose the manifest's languages from the known set in
+                          a checkbox buffer (Tab/Space toggle, :w save, q
+                          cancel), showing language names.
+
+    edit-annotations      Edit the manifest's <iq:annotations>, one entry per
+                          line (:w save, q cancel).
 
     edit-application      Edit the application type and minimum API level.
 

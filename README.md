@@ -106,9 +106,9 @@ Neovim detects `.mc` as `m4`.
 | `:MonkeyC generate-key [path]`           | generate a developer key (RSA 4096, PKCS8 DER) via openssl     |
 | `:MonkeyC new-project [dir]`             | scaffold a new project from an SDK template (prompts)          |
 | `:MonkeyC regenerate-uuid`               | give the manifest a fresh application id                       |
-| `:MonkeyC edit-products`                 | choose the manifest's target devices (checkbox buffer)         |
+| `:MonkeyC edit-products`                 | choose the manifest's target devices                           |
 | `:MonkeyC edit-permissions`              | edit the manifest's permissions                                |
-| `:MonkeyC edit-languages`                | edit the manifest's languages                                  |
+| `:MonkeyC edit-languages`                | choose the manifest's languages                                |
 | `:MonkeyC edit-annotations`              | edit the manifest's annotations                                |
 | `:MonkeyC edit-application`              | edit application type and minimum API level                    |
 | `:MonkeyC configure-barrel [path]`       | add, update, or remove a Monkey Barrel dependency              |
@@ -152,7 +152,7 @@ A few things to know:
   </tr>
   <tr>
     <td><i>Documentation selection, with Telescope and fuzzy searching</i>
-    <td><i>Edit products via checkbox buffer.</i>
+    <td><i>Editing the manifest's target devices.</i>
   </tr>
 </table>
 
