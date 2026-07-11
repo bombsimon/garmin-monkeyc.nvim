@@ -521,15 +521,15 @@ local function scaffold(name, app_type, dir)
   end
 
   -- Fill the empty manifest attributes the template leaves for us.
-  local manifest = vim.fs.joinpath(dir, "manifest.xml")
-  local m = table.concat(vim.fn.readfile(manifest), "\n")
+  local manifest_file = vim.fs.joinpath(dir, "manifest.xml")
+  local m = table.concat(vim.fn.readfile(manifest_file), "\n")
   m = m:gsub('id=""', 'id="' .. uuid() .. '"')
     :gsub('type=""', 'type="' .. app_type .. '"')
     :gsub('name=""', 'name="@Strings.AppName"')
     :gsub('entry=""', 'entry="' .. base .. 'App"')
     :gsub('launcherIcon=""', 'launcherIcon="@Drawables.LauncherIcon"')
     :gsub('minApiLevel=""', 'minApiLevel="1.0.0"')
-  vim.fn.writefile(vim.split(m, "\n"), manifest)
+  vim.fn.writefile(vim.split(m, "\n"), manifest_file)
 
   notify(("created %s (add products to manifest.xml before building)"):format(dir))
 
@@ -563,21 +563,22 @@ end
 -- Replace the manifest's application id with a fresh UUID (leaves product ids
 -- untouched). Use after copying a project so it gets its own identity.
 function M.regenerate_uuid()
-  local manifest = vim.fs.joinpath(project_directory(), "manifest.xml")
+  local manifest_file = vim.fs.joinpath(project_directory(), "manifest.xml")
 
-  if not vim.uv.fs_stat(manifest) then
+  if not vim.uv.fs_stat(manifest_file) then
     return notify("no manifest.xml found", vim.log.levels.ERROR)
   end
 
   local id = uuid()
-  local content, replaced =
-    table.concat(vim.fn.readfile(manifest), "\n"):gsub('(<iq:application[^>]-)id="[^"]*"', '%1id="' .. id .. '"', 1)
+  local content, replaced = table
+    .concat(vim.fn.readfile(manifest_file), "\n")
+    :gsub('(<iq:application[^>]-)id="[^"]*"', '%1id="' .. id .. '"', 1)
 
   if replaced == 0 then
     return notify("no <iq:application id> found in manifest.xml", vim.log.levels.ERROR)
   end
 
-  vim.fn.writefile(vim.split(content, "\n"), manifest)
+  vim.fn.writefile(vim.split(content, "\n"), manifest_file)
   vim.cmd("checktime") -- reload the manifest buffer if it is open
 
   notify("regenerated application id: " .. id)
