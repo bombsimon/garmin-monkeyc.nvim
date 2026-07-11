@@ -4,6 +4,7 @@
 
 local config = require("garmin-monkeyc.config")
 local sdk = require("garmin-monkeyc.sdk")
+local server_name = require("garmin-monkeyc.constants").server_name
 
 local M = {}
 
@@ -116,7 +117,7 @@ function M.check()
     health.warn("DAP debug adapter unavailable: monkeybrains.jar not found in " .. sdk_dir)
   end
 
-  local clients = vim.lsp.get_clients({ name = "monkeyc-lsp" })
+  local clients = vim.lsp.get_clients({ name = server_name })
   if #clients > 0 then
     health.ok(("language server running (%d client(s) attached)"):format(#clients))
   else
