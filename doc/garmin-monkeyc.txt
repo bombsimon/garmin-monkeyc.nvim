@@ -98,6 +98,14 @@ developer_key           string|nil (default: nil)
         Path to the developer key (`.der`) used to sign builds. Required by the
         build/run/test commands.
 
+                                        *garmin-monkeyc-config-rename_skip_prepare*
+rename_skip_prepare     boolean (default: false)
+        Skip the server's prepareRename step. prepareRename refuses to rename
+        while the workspace has errors ("Errors must be resolved before symbol
+        can be renamed."); set this true to rename directly regardless. Renames
+        may be incomplete if the workspace does not fully resolve. Otherwise run
+        |MonkeyC-diagnostics| to see and fix the errors.
+
 ==============================================================================
 5. Commands                            *garmin-monkeyc-commands* *MonkeyC*
 
@@ -135,6 +143,7 @@ Subcommands:                                                   *MonkeyC-build*
                                                     *MonkeyC-edit-application*
                                                     *MonkeyC-configure-barrel*
                                                                *MonkeyC-clean*
+                                                         *MonkeyC-diagnostics*
                                                                 *MonkeyC-logs*
                                                               *MonkeyC-cancel*
                                                          *MonkeyC-sdk-manager*
@@ -230,6 +239,10 @@ Subcommands:                                                   *MonkeyC-build*
 
     clean                 Remove the `bin/` build output directory.
 
+    diagnostics           Open all diagnostics in the |quickfix| list, for
+                          example the errors that block rename. Useful without a
+                          dedicated diagnostics UI.
+
     logs                  Open the most recent build's full output in a split.
                           Updates live while a build runs.
 
@@ -293,6 +306,7 @@ require("garmin-monkeyc").sdk_manager()            *garmin-monkeyc.sdk_manager()
 require("garmin-monkeyc").monkey_graph()           *garmin-monkeyc.monkey_graph()*
 require("garmin-monkeyc").monkey_motion()          *garmin-monkeyc.monkey_motion()*
 require("garmin-monkeyc").era()                    *garmin-monkeyc.era()*
+require("garmin-monkeyc").diagnostics()            *garmin-monkeyc.diagnostics()*
 require("garmin-monkeyc").clean()                  *garmin-monkeyc.clean()*
 require("garmin-monkeyc").logs()                   *garmin-monkeyc.logs()*
 require("garmin-monkeyc").cancel()                 *garmin-monkeyc.cancel()*

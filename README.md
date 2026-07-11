@@ -80,16 +80,17 @@ Neovim detects `.mc` as `m4`.
 
 ## Configuration
 
-| option                | default     | meaning                                                                                     |
-| --------------------- | ----------- | ------------------------------------------------------------------------------------------- |
-| `capabilities`        | `nil`       | base LSP client capabilities, merged with the plugin's overrides                            |
-| `on_attach`           | `nil`       | called when the server attaches to a buffer                                                 |
-| `type_check_level`    | `"Default"` | `Default`, `Off`, `Gradual`, `Informative`, `Strict`                                        |
-| `optimization_level`  | `"Default"` | compiler `-O` level: `Default`, `None`, `Basic`, `Fast`, `Slow` (`Default` omits `-O`)      |
-| `function_completion` | `"snippet"` | `"snippet"` puts the cursor inside `name()` (needs a snippet engine), `"strip"` uses `name` |
-| `sdk_path`            | per-OS      | the `Sdks` directory (see [Requirements](#requirements))                                    |
-| `device`              | `nil`       | device id for type-checking, leave unset unless you need it                                 |
-| `developer_key`       | `nil`       | path to the `.der` key used to sign builds                                                  |
+| option                | default     | meaning                                                                                          |
+| --------------------- | ----------- | ------------------------------------------------------------------------------------------------ |
+| `capabilities`        | `nil`       | base LSP client capabilities, merged with the plugin's overrides                                 |
+| `on_attach`           | `nil`       | called when the server attaches to a buffer                                                      |
+| `type_check_level`    | `"Default"` | `Default`, `Off`, `Gradual`, `Informative`, `Strict`                                             |
+| `optimization_level`  | `"Default"` | compiler `-O` level: `Default`, `None`, `Basic`, `Fast`, `Slow` (`Default` omits `-O`)           |
+| `function_completion` | `"snippet"` | `"snippet"` puts the cursor inside `name()` (needs a snippet engine), `"strip"` uses `name`      |
+| `sdk_path`            | per-OS      | the `Sdks` directory (see [Requirements](#requirements))                                         |
+| `device`              | `nil`       | device id for type-checking, leave unset unless you need it                                      |
+| `developer_key`       | `nil`       | path to the `.der` key used to sign builds                                                       |
+| `rename_skip_prepare` | `false`     | skip `prepareRename` so rename works even when the workspace has errors (see [LSP.md][lsp-docs]) |
 
 ## Commands
 
@@ -113,6 +114,7 @@ Neovim detects `.mc` as `m4`.
 | `:MonkeyC edit-application`              | edit application type and minimum API level                    |
 | `:MonkeyC configure-barrel [path]`       | add, update, or remove a Monkey Barrel dependency              |
 | `:MonkeyC clean`                         | remove the `bin/` build output directory                       |
+| `:MonkeyC diagnostics`                   | open all diagnostics in the quickfix                           |
 | `:MonkeyC logs`                          | open the last build's full output in a split                   |
 | `:MonkeyC cancel`                        | stop the running build                                         |
 | `:MonkeyC sdk-manager`                   | open the Connect IQ SDK Manager                                |
@@ -202,6 +204,8 @@ plugin:
 - Cleans the server's HTML hover into Markdown.
 - Rewrites `name()` completions into `name($0)` snippets so the cursor lands
   between the parens.
+- Answers the server's non-standard `custom/save` request so rename works (it
+  gates on workspace errors; see [LSP.md][lsp-docs]).
 
 Two features need a mapping because the server is non-standard. Both fall back to
 the builtin when no Monkey C client is attached, so they are safe to map globally:

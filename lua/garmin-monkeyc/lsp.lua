@@ -158,6 +158,44 @@ local function install_completion_transform(client, mode)
   end
 end
 
+-- Handle the server's custom/save request (a Garmin LSP extension, not part of
+-- the spec). Before operations that read from disk (e.g. prepareRename) the
+-- server asks the client to save the workspace's unsaved files and reply with
+-- their uris. The VS Code extension implements this; the stock client does not,
+-- which is why prepareRename failed until now. The request param is a path in
+-- the workspace; we save the modified monkeyc buffers under its project root.
+local function save_workspace(_, path, _)
+  local root = vim.fs.root(path, { "manifest.xml", ".git" }) or vim.fs.dirname(path)
+  local saved = {}
+  local ok = true
+
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    local name = vim.api.nvim_buf_get_name(buf)
+
+    if
+      vim.api.nvim_buf_is_loaded(buf)
+      and vim.bo[buf].modified
+      and vim.bo[buf].filetype == "monkeyc"
+      and name ~= ""
+      and vim.startswith(name, root .. "/")
+    then
+      local written = pcall(function()
+        vim.api.nvim_buf_call(buf, function()
+          vim.cmd("silent keepalt write")
+        end)
+      end)
+
+      if written then
+        saved[#saved + 1] = vim.uri_from_bufnr(buf)
+      else
+        ok = false
+      end
+    end
+  end
+
+  return { savedFiles = saved, error = not ok }
+end
+
 -- opts:
 --   on_attach            - LSP on_attach callback (optional)
 --   capabilities         - base client capabilities (optional)
@@ -201,14 +239,19 @@ function M.setup(opts)
     filetypes = { "monkeyc" },
     root_markers = { "manifest.xml", ".git" },
     capabilities = with_dynamic_registration(opts.capabilities),
+    -- The server's prepareRename issues a custom/save request; handle it so
+    -- rename (and anything else that needs a save first) works. See
+    -- save_workspace above and LSP.md.
+    handlers = {
+      ["custom/save"] = save_workspace,
+    },
     on_attach = function(client, bufnr)
       install_completion_transform(client, function_completion)
 
-      -- Quirk: the server advertises rename prepareProvider, but its
-      -- prepareRename NPEs (-32603) at every position, while plain
-      -- textDocument/rename works. Drop prepareProvider so vim.lsp.buf.rename()
-      -- skips the broken prepare step and renames directly.
-      if type(client.server_capabilities.renameProvider) == "table" then
+      -- Opt-out escape hatch: prepareRename refuses to rename while the
+      -- workspace has errors. Dropping prepareProvider makes rename skip that
+      -- gate and go straight to textDocument/rename.
+      if opts.rename_skip_prepare and type(client.server_capabilities.renameProvider) == "table" then
         client.server_capabilities.renameProvider.prepareProvider = nil
       end
 

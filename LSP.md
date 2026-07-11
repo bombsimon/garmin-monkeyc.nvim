@@ -84,11 +84,31 @@ confirm just like `rust-analyzer` et al. (needs a snippet engine). Set
   cleans the same VS Code markup as hover, and raises the float above the
   completion menu (it's usually invoked mid-argument, where the default float
   zindex would hide it behind nvim-cmp's menu).
-- **`rename` needs no prepare.** The server advertises
-  `renameProvider.prepareProvider`, but `textDocument/prepareRename` NPEs
-  (`-32603`) at every position; plain `textDocument/rename` works. The plugin
-  drops `prepareProvider` on attach so `vim.lsp.buf.rename()` skips the broken
-  prepare step.
+- **`rename` needs a `custom/save` handler.** The server advertises
+  `renameProvider.prepareProvider`, so `vim.lsp.buf.rename()` sends
+  `textDocument/prepareRename` first. `prepareRename` (in
+  `MonkeyCTextDocumentService`) tries to save the workspace to disk first by
+  sending the client a non-standard **`custom/save`** request (the server
+  resolves symbols from files on disk, so it forces unsaved buffers out). The VS
+  Code extension registers `onRequest("custom/save", ...)`; the stock Neovim
+  client has no handler, so the request goes unanswered, `prepareRename` fails
+  with `-32603` and its message `"Unable to save workspace files for rename."`,
+  and rename appears broken. The plugin registers a `custom/save` handler
+  (`handlers = { ["custom/save"] = ... }` in `lsp.lua`) that saves the modified
+  `monkeyc` buffers under the requested path's project root and replies with
+  `{ savedFiles = <uris>, error = false }`, matching what the extension returns.
+  With that in place `prepareRename` and rename work with no capability
+  patching. (An earlier version instead dropped `prepareProvider` to skip the
+  broken prepare step; handling `custom/save` is more correct and also covers
+  any other server operation that needs a save first.)
+
+  `prepareRename` then applies one more gate (also in VS Code): if the workspace
+  has any errors it returns `-32603` with "Errors must be resolved before symbol
+  can be renamed." (so the rename can find every reference). Two ways to deal
+  with that: run `:MonkeyC diagnostics` to open the diagnostics in the quickfix
+  and fix them, or set `rename_skip_prepare = true` to drop `prepareProvider` on
+  attach and rename directly, skipping the check (renames may be incomplete if
+  the workspace does not fully resolve).
 - **First-open delay.** The first `.mc` buffer triggers a full workspace build
   (a few seconds); requests during that window return empty.
 

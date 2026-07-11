@@ -384,6 +384,12 @@ function M.clean()
   notify("removed " .. bin)
 end
 
+-- Open all diagnostics in the quickfix (e.g. the errors that block rename), for
+-- users without a dedicated diagnostics UI.
+function M.diagnostics()
+  vim.diagnostic.setqflist({ open = true })
+end
+
 -- Generate a developer key (RSA 4096, PKCS8 DER, like the VS Code extension)
 -- via openssl. {path} defaults to the developer_key option, else
 -- ~/.ciq/developer_key.der. Refuses to overwrite an existing key.
@@ -641,6 +647,7 @@ local subcommands = {
     end
   end,
   ["clean"] = M.clean,
+  ["diagnostics"] = M.diagnostics,
   ["logs"] = M.logs,
   ["cancel"] = M.cancel,
   ["sdk-manager"] = tools.sdk_manager,

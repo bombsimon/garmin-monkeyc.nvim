@@ -26,6 +26,10 @@ M.options = {
   -- absolute path to the developer key (.der) used to sign builds (-y);
   -- required by :MonkeyC build / build-for-device / run / test
   developer_key = nil,
+  -- skip the server's prepareRename step for renames. prepareRename refuses to
+  -- rename while the workspace has any errors; set this true to rename directly
+  -- regardless (renames may be incomplete if the workspace does not resolve).
+  rename_skip_prepare = false,
 }
 
 function M.setup(opts)

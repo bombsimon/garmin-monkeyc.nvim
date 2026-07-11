@@ -35,6 +35,10 @@ function M.signature_help()
   return require("garmin-monkeyc.signature").signature_help()
 end
 
+function M.diagnostics()
+  return require("garmin-monkeyc.build").diagnostics()
+end
+
 -- Exposed for keymaps; the :MonkeyC command is the usual entry point. A nil
 -- device prompts for one (from the manifest).
 function M.build()
