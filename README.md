@@ -137,7 +137,31 @@ A few things to know:
 - Building needs a developer key. Set `developer_key`, or run `:MonkeyC generate-key`
   (needs `openssl`) to create one.
 
+<table>
+  <tr>
+    <td width="50%"><img src="./assets/build_for_device.png" alt="Build for device"/></td>
+    <td width="50%"><img src="./assets/build_log.png" alt="Build log" /></td>
+  </tr>
+  <tr>
+    <td><i>Build for device select, with Telescope and fuzzy searching</i>
+    <td><i>Build logs shown after a build</i>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./assets/documentation.png" alt="Documentation" /></td>
+    <td width="50%"><img src="./assets/edit_products.png" alt="Edit products" /></td>
+  </tr>
+  <tr>
+    <td><i>Documentation selection, with Telescope and fuzzy searching</i>
+    <td><i>Edit products via checkbox buffer.</i>
+  </tr>
+</table>
+
+> [!TIP]
+> The screenshots uses [tree-sitter-monkey-c] for syntax highlighting.
+
 ## Debugging (DAP)
+
+![debugger](./assets/debugger.png)
 
 `:MonkeyC debug [device]` starts a debug session with [nvim-dap]. The SDK ships
 a standard debug adapter (a Java DAP server in `monkeybrains.jar`), so the
@@ -164,6 +188,8 @@ read-only, since the adapter has no `setVariable`. See [DAP.md][dap-docs] for ho
 the adapter works and what it supports.
 
 ## LSP
+
+![lsp](./assets/type_hints.png)
 
 The bundled `LanguageServer.jar` does not work with a stock LSP client, so the
 plugin:
@@ -226,3 +252,4 @@ is attached.
 [snacks.nvim]: https://github.com/folke/snacks.nvim
 [telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim
 [vscode]: https://marketplace.visualstudio.com/items?itemName=garmin.monkey-c
+[tree-sitter-monkey-c]: https://github.com/bombsimon/tree-sitter-monkey-c
