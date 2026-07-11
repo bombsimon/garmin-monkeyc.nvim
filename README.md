@@ -240,6 +240,43 @@ Capabilities:
 
 For the LSP internals, see [LSP.md][lsp-docs].
 
+## Formatting
+
+The language server does not format Monkey C. For that, use
+[prettier-plugin-monkeyc] by @markw65, a Prettier plugin for the language. Huge
+kudos to that project.
+
+Install Prettier and the plugin (globally once is fine), e.g:
+
+```sh
+npm install -g prettier @markw65/prettier-plugin-monkeyc
+```
+
+Then point your formatter runner at it. For example with [none-ls]:
+
+```lua
+local null_ls = require("null-ls")
+
+-- Resolve the global plugin once. Prettier can't load a global plugin by name,
+-- so --plugin gets the absolute path to its built .cjs.
+local monkeyc_plugin = vim.trim(vim.fn.system({ "npm", "root", "-g" }))
+  .. "/@markw65/prettier-plugin-monkeyc/build/prettier-plugin-monkeyc.cjs"
+
+null_ls.setup({
+  sources = {
+    null_ls.builtins.formatting.prettier.with({
+      name = "prettier_monkeyc",
+      extra_filetypes = { "monkeyc" },
+      extra_args = { "--plugin", monkeyc_plugin },
+    }),
+  },
+})
+```
+
+Passing `--plugin` on every Prettier run is harmless; Prettier only uses the
+Monkey C parser for `.mc` files. The `monkeyc` filetype comes from this plugin's
+`ftdetect`.
+
 ## Health check
 
 `:checkhealth garmin-monkeyc` reports the SDK and version, the toolchain
@@ -253,6 +290,8 @@ is attached.
 [lazy.nvim]: https://github.com/folke/lazy.nvim
 [lsp-docs]: ./LSP.md
 [nvim-dap]: https://github.com/mfussenegger/nvim-dap
+[none-ls]: https://github.com/nvimtools/none-ls.nvim
+[prettier-plugin-monkeyc]: https://github.com/markw65/prettier-plugin-monkeyc
 [snacks.nvim]: https://github.com/folke/snacks.nvim
 [telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim
 [vscode]: https://marketplace.visualstudio.com/items?itemName=garmin.monkey-c
