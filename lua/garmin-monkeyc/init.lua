@@ -40,17 +40,26 @@ function M.diagnostics()
 end
 
 -- Exposed for keymaps; the :MonkeyC command is the usual entry point. A nil
--- device prompts for one (from the manifest).
-function M.build()
-  return require("garmin-monkeyc.build").build()
+-- device prompts for one (from the manifest). `opts.command` lets a caller hand
+-- in a ready-made build command while reusing this plugin's build flow; see
+-- build.lua's compile().
+function M.build(opts)
+  return require("garmin-monkeyc.build").build(opts)
 end
 
-function M.build_for_device(device)
-  return require("garmin-monkeyc.build").build_for_device(device)
+function M.build_for_device(device, opts)
+  return require("garmin-monkeyc.build").build_for_device(device, opts)
 end
 
-function M.run(device)
-  return require("garmin-monkeyc.build").run(device)
+-- Prompt for a device from the manifest (via vim.ui.select), calling
+-- callback(device). Exposed so callers that build their own command still reuse
+-- the picker.
+function M.pick_device(callback)
+  return require("garmin-monkeyc.build").pick_device(callback)
+end
+
+function M.run(device, opts)
+  return require("garmin-monkeyc.build").run(device, opts)
 end
 
 function M.test(device)
@@ -65,8 +74,8 @@ function M.debug_complication(device)
   return require("garmin-monkeyc.dap").debug_complication(device)
 end
 
-function M.export(output)
-  return require("garmin-monkeyc.build").export(output)
+function M.export(output, opts)
+  return require("garmin-monkeyc.build").export(output, opts)
 end
 
 function M.logs()

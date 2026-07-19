@@ -77,44 +77,16 @@ local function output_prg(directory, device, unit_test)
   return vim.fs.joinpath(directory, "bin", file)
 end
 
--- Compile the project. opts:
---   device     - target device (-d); omit to package all products (export)
---   unit_test  - build with -t (unit tests) to a separate prg
---   package    - build a distributable application package (-e -r, .iq)
---   output     - override the output path
---   directory  - project directory to build (defaults to the current project)
---   label      - progress message ("building for X" by default)
---   on_success - called with the output path
--- Errors go to the quickfix list.
-local function compile(opts)
-  opts = opts or {}
-
-  if current_build then
-    return notify("a build is already running (:MonkeyC cancel to stop it)", vim.log.levels.WARN)
-  end
-
+-- Assemble the default SDK compiler invocation for a build `context`. argv[1]
+-- is the executable. We invoke the compiler jar directly (like the VS Code
+-- extension) rather than the monkeyc shell wrapper, so the process we spawn is
+-- the JVM itself and :MonkeyC cancel can kill it. -Dapple.awt.UIElement=true
+-- keeps it off the macOS Dock.
+local function default_command(context)
   local options = config.options
-
-  if not (options.developer_key and vim.uv.fs_stat(options.developer_key)) then
-    return notify("set developer_key to a valid .der to build (see :MonkeyC or the README)", vim.log.levels.ERROR)
-  end
-
   local jar = sdk.tool(options.sdk_path, "monkeybrains.jar")
 
-  if not jar then
-    return notify("monkeybrains.jar not found under " .. options.sdk_path, vim.log.levels.ERROR)
-  end
-
-  local directory = opts.directory or project_directory()
-  local output = opts.output or output_prg(directory, opts.device, opts.unit_test)
-
-  vim.fn.mkdir(vim.fs.dirname(output), "p")
-
-  -- Invoke the compiler jar directly (like the VS Code extension) rather than
-  -- the monkeyc shell wrapper, so the process we spawn is the JVM itself and
-  -- :MonkeyC cancel can kill it. -Dapple.awt.UIElement=true keeps it off the
-  -- macOS Dock.
-  local args = {
+  local argv = {
     "java",
     "-Xms1g",
     "-Dfile.encoding=UTF-8",
@@ -122,42 +94,49 @@ local function compile(opts)
     "-jar",
     jar,
     "-f",
-    table.concat(sdk.jungle_files(directory), ";"),
+    table.concat(context.jungle_files, ";"),
     "-o",
-    output,
+    context.output,
     "-y",
     options.developer_key,
     "-w",
   }
 
-  if opts.device then
-    vim.list_extend(args, { "-d", opts.device })
+  if context.device then
+    vim.list_extend(argv, { "-d", context.device })
   end
 
-  if opts.unit_test then
-    table.insert(args, "-t")
+  if context.unit_test then
+    table.insert(argv, "-t")
   end
 
-  if opts.package then
-    vim.list_extend(args, { "-e", "-r" })
+  if context.package then
+    vim.list_extend(argv, { "-e", "-r" })
   end
 
   local flag = typecheck_flag[options.type_check_level]
   if flag then
-    vim.list_extend(args, { "-l", flag })
+    vim.list_extend(argv, { "-l", flag })
   end
 
   local optimization = optimization_flag[options.optimization_level]
   if optimization then
-    vim.list_extend(args, { "-O", optimization })
+    vim.list_extend(argv, { "-O", optimization })
   end
 
-  local label = opts.label or ("building for " .. opts.device)
+  return { argv = argv, cwd = context.directory, output = context.output }
+end
+
+-- Spawn a build command and report on it: stream output, keep a full log, show
+-- per-device progress, quickfix on failure, and run on_success on success.
+-- `command` is {argv, cwd, output} (from default_command or opts.command);
+-- command.output is the built binary the simulator will run.
+local function run_command(command, opts, label)
   notify(label .. "…")
 
   -- Stream output so we can show per-device progress and keep a full log.
   -- monkeyc prints "N OUT OF M DEVICES BUILT" as it packages each product.
-  local header = table.concat(args, " ")
+  local header = table.concat(command.argv, " ")
   local chunks = {}
 
   local function on_output(_, data)
@@ -184,8 +163,8 @@ local function compile(opts)
   end
 
   current_build = vim.system(
-    args,
-    { text = true, cwd = directory, stdout = on_output, stderr = on_output },
+    command.argv,
+    { text = true, cwd = command.cwd, stdout = on_output, stderr = on_output },
     function(result)
       vim.schedule(function()
         current_build = nil
@@ -197,10 +176,10 @@ local function compile(opts)
         end
 
         if result.code == 0 then
-          notify(("built %s"):format(output))
+          notify(("built %s"):format(command.output))
 
           if opts.on_success then
-            opts.on_success(output)
+            opts.on_success(command.output)
           end
         else
           notify("build failed (see :MonkeyC logs)", vim.log.levels.ERROR)
@@ -211,6 +190,70 @@ local function compile(opts)
       end)
     end
   )
+end
+
+-- Compile the project. opts:
+--   device     - target device (-d); omit to package all products (export)
+--   unit_test  - build with -t (unit tests) to a separate prg
+--   package    - build a distributable application package (-e -r, .iq)
+--   output     - override the output path
+--   directory  - project directory to build (defaults to the current project)
+--   label      - progress message ("building for X" by default)
+--   on_success - called with the built output path
+--   command    - a ready-made {argv, cwd, output} to run instead of the default
+--                SDK command; command.output is the built binary on_success and
+--                the simulator use.
+-- Errors go to the quickfix list.
+local function compile(opts)
+  opts = opts or {}
+
+  if current_build then
+    return notify("a build is already running (:MonkeyC cancel to stop it)", vim.log.levels.WARN)
+  end
+
+  local label = opts.label or ("building for " .. tostring(opts.device))
+
+  -- A command may point its output elsewhere (an optimized build lands at a
+  -- different path); make sure that directory exists before running it.
+  local function start(command)
+    if command.output then
+      vim.fn.mkdir(vim.fs.dirname(command.output), "p")
+    end
+
+    run_command(command, opts, label)
+  end
+
+  -- A caller can hand us a fully formed command; it is self-contained (its own
+  -- compiler, key and args), so just run it through our build machinery.
+  if opts.command then
+    return start(opts.command)
+  end
+
+  local options = config.options
+
+  if not (options.developer_key and vim.uv.fs_stat(options.developer_key)) then
+    return notify("set developer_key to a valid .der to build (see :MonkeyC or the README)", vim.log.levels.ERROR)
+  end
+
+  if not sdk.tool(options.sdk_path, "monkeybrains.jar") then
+    return notify("monkeybrains.jar not found under " .. options.sdk_path, vim.log.levels.ERROR)
+  end
+
+  local directory = opts.directory or project_directory()
+  local output = opts.output or output_prg(directory, opts.device, opts.unit_test)
+
+  vim.fn.mkdir(vim.fs.dirname(output), "p")
+
+  local context = {
+    directory = directory,
+    device = opts.device,
+    output = output,
+    unit_test = opts.unit_test or false,
+    package = opts.package or false,
+    jungle_files = sdk.jungle_files(directory),
+  }
+
+  start(default_command(context))
 end
 
 -- Launch the simulator (if needed) and push the built prg to it. opts.unit_test
@@ -274,13 +317,17 @@ function M.pick_device(callback)
   end)
 end
 
-function M.build_for_device(device)
+-- opts.command (optional) is a ready-made {argv, cwd, output} to run instead of
+-- the default SDK command; see compile().
+function M.build_for_device(device, opts)
+  opts = opts or {}
+
   if device and device ~= "" then
-    return compile({ device = device })
+    return compile({ device = device, command = opts.command })
   end
 
   M.pick_device(function(chosen)
-    compile({ device = chosen })
+    compile({ device = chosen, command = opts.command })
   end)
 end
 
@@ -298,11 +345,14 @@ function M.build_debug(device, on_success, opts)
   })
 end
 
--- Build and run in the simulator.
-function M.run(device)
+-- Build and run in the simulator. opts.command runs a caller-supplied command.
+function M.run(device, opts)
+  opts = opts or {}
+
   local function build_and_run(chosen)
     compile({
       device = chosen,
+      command = opts.command,
       on_success = function(prg)
         run_in_simulator(chosen, prg)
       end,
@@ -339,7 +389,11 @@ end
 -- Build a distributable application package (.iq) for the Connect IQ Store:
 -- all products, release build. {output} may be a file or directory; defaults to
 -- bin/<project>.iq.
-function M.export(output)
+-- opts.command runs a caller-supplied export command instead of the default.
+-- Note the command may point the output elsewhere (it carries its own output).
+function M.export(output, opts)
+  opts = opts or {}
+
   local directory = project_directory()
   local name = vim.fs.basename(directory)
 
@@ -356,20 +410,23 @@ function M.export(output)
   compile({
     package = true,
     output = output,
+    command = opts.command,
     label = "exporting " .. vim.fs.basename(output),
   })
 end
 
 -- Build the current project without prompting, using a default device: the
 -- `device` option if set, else the first product in the manifest.
-function M.build()
+function M.build(opts)
+  opts = opts or {}
+
   local device = config.options.device or sdk.manifest_devices(project_directory())[1]
 
   if not device then
     return notify("no default device; set the `device` option or add products to manifest.xml", vim.log.levels.ERROR)
   end
 
-  compile({ device = device })
+  compile({ device = device, command = opts.command })
 end
 
 -- Remove the build output directory (bin/), like VS Code's "Clean Project".
