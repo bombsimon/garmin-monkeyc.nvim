@@ -13,6 +13,11 @@ Tracking the [VS Code extension][vscode].
 
 - [x] Language server: hover, completion, goto-definition, references, rename,
       symbols, folding, call/type hierarchy (see [LSP](#lsp))
+- [x] Syntax highlighting: bundled Vim syntax for `.mc`/`.mb`/`.mcgen`,
+      `.jungle`, and `.mss`, ported from the VS Code TextMate grammars. ⚙️
+      [tree-sitter-monkey-c] is recommended for higher fidelity (plus folds and
+      text objects); the bundled syntax is a zero-setup fallback used when no
+      tree-sitter parser is active.
 - [x] Build for device - `:MonkeyC build-for-device [device]`
 - [x] Build current project - `:MonkeyC build`
 - [x] Run in simulator - `:MonkeyC run [device]`
@@ -33,8 +38,8 @@ Tracking the [VS Code extension][vscode].
 - [x] Complication launch - `:MonkeyC debug-complication [device]`
 - [x] Configure barrel - `:MonkeyC configure-barrel [path]` ⚙️
 
-⚙️ reimplemented in Lua; everything else drives the SDK's own binaries, the same
-code the VS Code extension runs.
+⚙️ reimplemented locally (in Lua, or a bundled Vim syntax file); everything else
+drives the SDK's own binaries, the same code the VS Code extension runs.
 
 ## Requirements
 
