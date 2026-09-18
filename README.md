@@ -282,6 +282,12 @@ Passing `--plugin` on every Prettier run is harmless; Prettier only uses the
 Monkey C parser for `.mc` files. The `monkeyc` filetype comes from this plugin's
 `ftdetect`.
 
+## Optimizing
+
+There's a separate plugin, [`monkeyc-optimizer.nvim`][optimizer-nvim], which
+ports the amazing work from @markw65's [monkeyc-optimizer] to Neovim as well.
+It can be seen as an extension to this plugin and work as a companion plugin.
+
 ## Health check
 
 `:checkhealth garmin-monkeyc` reports the SDK and version, the toolchain
@@ -301,3 +307,5 @@ is attached.
 [telescope-ui-select]: https://github.com/nvim-telescope/telescope-ui-select.nvim
 [vscode]: https://marketplace.visualstudio.com/items?itemName=garmin.monkey-c
 [tree-sitter-monkey-c]: https://github.com/bombsimon/tree-sitter-monkey-c
+[optimizer-nvim]: https://github.com/bombsimon/monkeyc-optimizer.nvim
+[monkeyc-optimizer]: https://github.com/markw65/monkeyc-optimizer
