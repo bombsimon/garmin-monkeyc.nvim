@@ -7,6 +7,12 @@
 return {
   server_name = "monkeyc-lsp",
 
+  -- Simulator debug shell ports, greeted with a banner containing
+  -- simulator_banner; probed to know when the simulator is ready. See DAP.md.
+  simulator_host = "127.0.0.1",
+  simulator_ports = { 1234, 1235, 1236, 1237, 1238 },
+  simulator_banner = "A garmin device",
+
   -- Valid optimization_level option values (matching the VS Code extension's
   -- monkeyC.optimizationLevel enum). "Default" omits -O; build.lua maps the
   -- rest to the compiler's -O 0..3.

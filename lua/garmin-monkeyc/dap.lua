@@ -13,21 +13,9 @@
 
 local config = require("garmin-monkeyc.config")
 local sdk = require("garmin-monkeyc.sdk")
+local simulator = require("garmin-monkeyc.simulator")
 
 local M = {}
-
--- The simulator's debug shell listens on one of these ports and greets a new
--- connection with a banner containing SIMULATOR_BANNER. The adapter connects to
--- it; we probe the same range to know the simulator is up, matching the VS Code
--- extension (which scans 1234..1238 for the banner).
-local SIMULATOR_HOST = "127.0.0.1"
-local SIMULATOR_PORTS = { 1234, 1235, 1236, 1237, 1238 }
-local SIMULATOR_BANNER = "A garmin device"
-
--- Total time to wait for the simulator to come up, and how often to rescan.
-local SIMULATOR_WAIT_MS = 40000
-local SIMULATOR_POLL_INTERVAL_MS = 250
-local SIMULATOR_PROBE_TIMEOUT_MS = 400
 
 local function notify(message, level)
   vim.notify("garmin-monkeyc: " .. message, level or vim.log.levels.INFO)
@@ -95,108 +83,13 @@ end
 -- Launch the simulator GUI (a no-op if it is already running). The adapter,
 -- not monkeydo, loads the prg into the simulator over the debug port.
 local function start_simulator()
-  local connectiq = sdk.tool(config.options.sdk_path, "connectiq")
-
-  if not connectiq then
+  if not simulator.start(config.options.sdk_path) then
     notify("connectiq not found under " .. tostring(config.options.sdk_path), vim.log.levels.ERROR)
 
     return false
   end
 
-  vim.system({ connectiq })
-
   return true
-end
-
--- Connect to one port and report whether the simulator greeted us with its
--- banner. A connection to a wrong/closed port, or no banner within the probe
--- timeout, counts as not-ready.
-local function probe_port(port, on_result)
-  local client = vim.uv.new_tcp()
-  local timer = vim.uv.new_timer()
-  local settled = false
-
-  local function finish(ready)
-    if settled then
-      return
-    end
-
-    settled = true
-
-    pcall(function()
-      timer:stop()
-      timer:close()
-    end)
-    pcall(function()
-      client:read_stop()
-    end)
-    pcall(function()
-      if not client:is_closing() then
-        client:close()
-      end
-    end)
-
-    on_result(ready)
-  end
-
-  client:connect(SIMULATOR_HOST, port, function(err)
-    if err then
-      return finish(false)
-    end
-
-    client:read_start(function(read_err, data)
-      if read_err or not data then
-        return finish(false)
-      end
-
-      finish(data:find(SIMULATOR_BANNER, 1, true) ~= nil)
-    end)
-  end)
-
-  timer:start(SIMULATOR_PROBE_TIMEOUT_MS, 0, function()
-    finish(false)
-  end)
-end
-
--- Scan the simulator ports for the banner until one answers, then call
--- on_ready(true); on_ready(false) if none come up within SIMULATOR_WAIT_MS.
-local function wait_for_simulator(on_ready)
-  local rounds = math.max(1, math.floor(SIMULATOR_WAIT_MS / SIMULATOR_POLL_INTERVAL_MS))
-
-  local function scan(remaining)
-    local index = 0
-
-    local function try_next()
-      index = index + 1
-      local port = SIMULATOR_PORTS[index]
-
-      if not port then
-        if remaining <= 0 then
-          return vim.schedule(function()
-            on_ready(false)
-          end)
-        end
-
-        return vim.defer_fn(function()
-          scan(remaining - 1)
-        end, SIMULATOR_POLL_INTERVAL_MS)
-      end
-
-      probe_port(port, function(ready)
-        if ready then
-          vim.schedule(function()
-            on_ready(true)
-          end)
-        else
-          vim.schedule(try_next)
-        end
-      end)
-    end
-
-    try_next()
-  end
-
-  scan(rounds)
 end
 
 -- Build a debuggable prg for the device, start the simulator, wait for its
@@ -229,13 +122,13 @@ function M.debug(device, opts)
 
       notify("waiting for the simulator…")
 
-      wait_for_simulator(function(ready)
+      simulator.wait_ready(function(ready)
         if not ready then
           return notify(
             ("simulator did not open its debug port (%s:%d-%d); is it running?"):format(
-              SIMULATOR_HOST,
-              SIMULATOR_PORTS[1],
-              SIMULATOR_PORTS[#SIMULATOR_PORTS]
+              simulator.host,
+              simulator.ports[1],
+              simulator.ports[#simulator.ports]
             ),
             vim.log.levels.ERROR
           )
@@ -322,13 +215,13 @@ function M.debug_complication(device)
 
           notify("waiting for the simulator…")
 
-          wait_for_simulator(function(ready)
+          simulator.wait_ready(function(ready)
             if not ready then
               return notify(
                 ("simulator did not open its debug port (%s:%d-%d); is it running?"):format(
-                  SIMULATOR_HOST,
-                  SIMULATOR_PORTS[1],
-                  SIMULATOR_PORTS[#SIMULATOR_PORTS]
+                  simulator.host,
+                  simulator.ports[1],
+                  simulator.ports[#simulator.ports]
                 ),
                 vim.log.levels.ERROR
               )
