@@ -6,6 +6,7 @@ local config = require("garmin-monkeyc.config")
 local sdk = require("garmin-monkeyc.sdk")
 local tools = require("garmin-monkeyc.tools")
 local manifest = require("garmin-monkeyc.manifest")
+local simulator = require("garmin-monkeyc.simulator")
 
 local M = {}
 
@@ -58,6 +59,25 @@ local function render_log()
 
   for _, win in ipairs(vim.fn.win_findbuf(log_bufnr)) do
     vim.api.nvim_win_set_cursor(win, { #log_lines, 0 })
+  end
+end
+
+-- Create the log buffer if it doesn't exist yet.
+local function ensure_log_buffer()
+  if not (log_bufnr and vim.api.nvim_buf_is_valid(log_bufnr)) then
+    log_bufnr = vim.api.nvim_create_buf(false, true)
+    vim.bo[log_bufnr].filetype = "log"
+    pcall(vim.api.nvim_buf_set_name, log_bufnr, "MonkeyC build log")
+  end
+end
+
+-- Open the log buffer in a split, unless it is already visible in a window.
+local function open_log_window()
+  ensure_log_buffer()
+
+  if #vim.fn.win_findbuf(log_bufnr) == 0 then
+    vim.cmd("botright split")
+    vim.api.nvim_win_set_buf(0, log_bufnr)
   end
 end
 
@@ -256,6 +276,18 @@ local function compile(opts)
   start(default_command(context))
 end
 
+-- monkeydo retry budget: a fresh/switching simulator, or a unit test with no
+-- summary yet, can need another try.
+local MONKEYDO_ATTEMPTS = 3
+local MONKEYDO_RETRY_DELAY_MS = 1500
+
+-- monkeydo's exit code can't be trusted for -t (confirmed via the shell: it
+-- returns 1 on a full pass). Nil when there's no summary to parse yet, or
+-- none to expect at all.
+local function unit_test_summary(output)
+  return output:match("(%u+)%s*%(passed=%d+, failed=%d+, errors=%d+%)")
+end
+
 -- Launch the simulator (if needed) and push the built prg to it. opts.unit_test
 -- runs the app's unit tests (monkeydo -t).
 local function run_in_simulator(device, prg, opts)
@@ -269,10 +301,7 @@ local function run_in_simulator(device, prg, opts)
     return notify("connectiq/monkeydo not found under " .. options.sdk_path, vim.log.levels.ERROR)
   end
 
-  -- Launch the simulator; it's a no-op if already running. monkeydo needs it
-  -- up, so give it a moment before pushing the executable.
-  vim.system({ connectiq })
-
+  simulator.start(options.sdk_path)
   notify("starting simulator…")
 
   local monkeydo_args = { monkeydo, prg, device }
@@ -280,17 +309,78 @@ local function run_in_simulator(device, prg, opts)
     table.insert(monkeydo_args, "-t")
   end
 
-  vim.defer_fn(function()
+  local header = table.concat(monkeydo_args, " ")
+  local verb = opts.unit_test and "tests" or "run"
+
+  -- Show monkeydo's output in the same log buffer as build output. No
+  -- file:line info here for a quickfix list to add over that.
+  local function finish(output, success)
+    log_lines = vim.split(header .. "\n\n" .. output, "\n", { trimempty = false })
+    -- The buffer must exist before writing to it, or the write silently no-ops.
+    open_log_window()
+    render_log()
+
+    if success then
+      -- "running" fits a plain run (it keeps going). A test has already finished.
+      notify((opts.unit_test and "tests passed on %s simulator" or "running on %s simulator"):format(device))
+    else
+      notify(verb .. " failed (see :MonkeyC logs)", vim.log.levels.ERROR)
+    end
+  end
+
+  local function attempt(n)
     vim.system(monkeydo_args, { text = true }, function(result)
       vim.schedule(function()
-        if result.code == 0 then
-          notify(("%s on %s simulator"):format(opts.unit_test and "running tests" or "running", device))
+        local output = table.concat({ result.stdout or "", result.stderr or "" })
+        local summary = opts.unit_test and unit_test_summary(output)
+        local exhausted = n >= MONKEYDO_ATTEMPTS
+
+        -- A unit test waits for its own printed summary; a plain run has no
+        -- summary, so its exit code is all there is.
+        local done
+
+        if opts.unit_test then
+          done = summary ~= nil or exhausted
         else
-          notify("run failed (is the simulator running?)", vim.log.levels.ERROR)
+          done = result.code == 0 or exhausted
         end
+
+        if not done then
+          echo(("%s produced no result yet, retrying (%d/%d)…"):format(verb, n + 1, MONKEYDO_ATTEMPTS))
+
+          return vim.defer_fn(function()
+            attempt(n + 1)
+          end, MONKEYDO_RETRY_DELAY_MS)
+        end
+
+        local success
+        if summary then
+          success = summary == "PASSED"
+        else
+          success = result.code == 0
+        end
+
+        finish(output, success)
       end)
     end)
-  end, 3000)
+  end
+
+  -- "Already running" isn't "ready to accept an app" (e.g. still switching
+  -- device profile), so wait for the debug port instead of a fixed delay.
+  simulator.wait_ready(function(ready)
+    if not ready then
+      return notify(
+        ("simulator did not open its debug port (%s:%d-%d); is it running?"):format(
+          simulator.host,
+          simulator.ports[1],
+          simulator.ports[#simulator.ports]
+        ),
+        vim.log.levels.ERROR
+      )
+    end
+
+    attempt(1)
+  end)
 end
 
 -- Prompt for a device from the manifest via vim.ui.select. With
@@ -654,21 +744,13 @@ end
 -- Open the most recent build's full output in a split. Updates live while a
 -- build is running.
 function M.logs()
-  if not (log_bufnr and vim.api.nvim_buf_is_valid(log_bufnr)) then
-    log_bufnr = vim.api.nvim_create_buf(false, true)
-    vim.bo[log_bufnr].filetype = "log"
-    pcall(vim.api.nvim_buf_set_name, log_bufnr, "MonkeyC build log")
-  end
+  ensure_log_buffer()
 
   if #log_lines == 0 then
     log_lines = { "No build has run yet." }
   end
 
-  if #vim.fn.win_findbuf(log_bufnr) == 0 then
-    vim.cmd("botright split")
-    vim.api.nvim_win_set_buf(0, log_bufnr)
-  end
-
+  open_log_window()
   render_log()
 end
 
